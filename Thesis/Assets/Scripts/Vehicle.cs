@@ -12,6 +12,7 @@ public class Vehicle : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
+		GetComponent<Rigidbody>().velocity = transform.right * speed;
 	}
 
 	public void SetSpeed(float x)
