@@ -3,6 +3,7 @@ using System.Collections;
 
 public class GameController : MonoBehaviour {
 
+	public int vehicleCounter = 0;
 
 	public GameObject[] vehicles;
 	float[] YCoor = { -2f, -0.2f, 0.4f, 0f,2.3f,0f,0f,0.3f,-2f,0f,0f,0f,0f };
@@ -38,9 +39,11 @@ public class GameController : MonoBehaviour {
 
 			vehicle.GetComponent<Vehicle> ().SetSpeed (40);
 
+
 			int assignedTurn = 0;
 			if (lane % 2 == 0)
-				assignedTurn = 1;
+				assignedTurn = Random.Range(0,2);
+			else assignedTurn = Random.Range(-1,1);
 			vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 			vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 
@@ -51,8 +54,13 @@ public class GameController : MonoBehaviour {
 			vehicleIndex %= 13;
 
 
-			yield return new WaitForSeconds (1f);
+			yield return new WaitForSeconds (0.4f);
 		}
+	}
+
+	public void IncrementCounter()
+	{
+		vehicleCounter++;
 	}
 
 }
