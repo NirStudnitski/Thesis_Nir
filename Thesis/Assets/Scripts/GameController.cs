@@ -5,11 +5,11 @@ public class GameController : MonoBehaviour {
 
 
 	public GameObject[] vehicles;
-	float[] YCoor = { -1.9f, -1.9f, 2.1f, -2f,1f,1,1,1,1,1,1,1,1 };
+	float[] YCoor = { -2f, -0.2f, 0.4f, 0f,2.3f,0f,0f,0.3f,-2f,0f,0f,0f,0f };
 	private float[,] laneXZ = { {  -270f, -6.5f }, { -270f, -18f },
-								{  6f, 270f }, { 18.3f, 270f },
+								{  -6.5f, 270f }, { -18.3f, 270f },
 								{  270f, 6.5f }, { 270f, 18.5f },
-								{  -6f, -270f }, { -18.3f, -270f }
+								{  6f, -270f }, { 18.3f, -270f }
 	
 							};
 
@@ -27,19 +27,31 @@ public class GameController : MonoBehaviour {
 
 	IEnumerator SpawnCars ()
 	{
-		int direction = 0;
-		int lane=6;
+		
+		int lane=0;
+		int vehicleIndex = 0;
 		while (true)
 		{
-			Vector3 spawnPosition = new Vector3 (laneXZ[lane,0], YCoor[0], laneXZ[lane,1]);
+			Vector3 spawnPosition = new Vector3 (laneXZ[lane,0], YCoor[vehicleIndex], laneXZ[lane,1]);
 			Quaternion spawnRotation = Quaternion.identity* Quaternion.Euler (0f, (lane/2)*90f, 0f);
-			GameObject vehicle = (GameObject) Instantiate (vehicles[7], spawnPosition, spawnRotation);
-			vehicle.GetComponent<Vehicle> ().SetSpeed (0);
+			GameObject vehicle = (GameObject) Instantiate (vehicles[vehicleIndex], spawnPosition, spawnRotation);
+
+			vehicle.GetComponent<Vehicle> ().SetSpeed (40);
+
+			int assignedTurn = 0;
+			if (lane % 2 == 0)
+				assignedTurn = 1;
+			vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
+			vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 
 
-			yield return new WaitForSeconds (20);
+			lane++;
+			lane %= 8;
+			vehicleIndex++;
+			vehicleIndex %= 13;
 
-			direction %= 4;
+
+			yield return new WaitForSeconds (1f);
 		}
 	}
 
