@@ -1,9 +1,19 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 
 public class GameController : MonoBehaviour {
 
-	public int vehicleCounter = 0;
+
+	private float waitTime;
+	float bla;
+	private int vehicleCounter;
+	public Text rateText;
+	public Text countText;
+	public Button collisionButton;
+	static public bool collisionOn;
+	float lastUpdate, thisUpdate;
+	private int lastVehicleCount;
 
 	public GameObject[] vehicles;
 	float[] YCoor = { -2f, -0.2f, 0.4f, 0f,2.3f,0f,0f,0.3f,-2f,0f,0f,0f,0f };
@@ -20,8 +30,17 @@ public class GameController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-	
+
+		vehicleCounter = 0;
+
+
+		collisionOn = true;
+		waitTime = 4f;
+		Slider (0.25f);
 		StartCoroutine(SpawnCars ());
+
+
+
 
 	}
 	
@@ -77,15 +96,30 @@ public class GameController : MonoBehaviour {
 				vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 				vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 				clearTimes [lane] = now + (30f / givenSpeed);
+				vehicleCounter++;
+				countText.text = "Vehicle Count: " + vehicleCounter;
+
+
 			}
 
-			yield return new WaitForSeconds (Random.Range(0.3f, 0.4f));
+
+			yield return new WaitForSeconds (Random.Range(0.90f, 1.10f)*waitTime);
 		}
+
+
 	}
 
-	public void IncrementCounter()
+
+	public void Slider(float fIn)
 	{
-		vehicleCounter++;
+		waitTime = 1f / fIn;
+		rateText.text = "Vehicle Rate: " + fIn.ToString ("F") + " v/sec";
 	}
 
+	public void ChangeColliderOn()
+	{
+		collisionOn = !collisionOn;
+		if (collisionOn) collisionButton.GetComponentInChildren<Text>().text = "Collisions: ON";
+		else collisionButton.GetComponentInChildren<Text>().text = "Collisions: OFF";
+	}
 }
