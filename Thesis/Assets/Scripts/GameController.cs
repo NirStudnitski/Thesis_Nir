@@ -8,8 +8,11 @@ public class GameController : MonoBehaviour {
 	private float waitTime;
 	float bla;
 	private int vehicleCounter;
-	public Text rateText;
-	public Text countText;
+	public Text rateText, rateShadow;
+	public Text countText, countShadow;
+	public Text leftText, leftShadow;
+	public Text rightText, rightShadow;
+	private float leftTurningPercent, rightTurningPercent;
 	public Button collisionButton;
 	static public bool collisionOn;
 	float lastUpdate, thisUpdate;
@@ -37,6 +40,8 @@ public class GameController : MonoBehaviour {
 		collisionOn = true;
 		waitTime = 4f;
 		Slider (0.25f);
+		LeftTurningSlider (25f);
+		RightTurningSlider (25f);
 		StartCoroutine(SpawnCars ());
 
 
@@ -90,14 +95,15 @@ public class GameController : MonoBehaviour {
 
 				int assignedTurn = 0;
 				if (lane % 2 == 0)
-					assignedTurn = Random.Range (0, 2);
+					assignedTurn = (leftTurningPercent > Random.Range(0f,50f) ? 1 : 0);
 				else
-					assignedTurn = Random.Range (-1, 1);
+					assignedTurn = (rightTurningPercent > Random.Range(0f,50f) ? -1 : 0);
 				vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 				vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 				clearTimes [lane] = now + (30f / givenSpeed);
 				vehicleCounter++;
 				countText.text = "Vehicle Count: " + vehicleCounter;
+				countShadow.text = "Vehicle Count: " + vehicleCounter;
 
 
 			}
@@ -114,6 +120,21 @@ public class GameController : MonoBehaviour {
 	{
 		waitTime = 1f / fIn;
 		rateText.text = "Vehicle Rate: " + fIn.ToString ("F") + " v/sec";
+		rateShadow.text = "Vehicle Rate: " + fIn.ToString ("F") + " v/sec";
+	}
+
+	public void LeftTurningSlider(float fIn)
+	{
+		leftTurningPercent = fIn;
+		leftText.text = "Left Turning: " + fIn.ToString ("F") + "%";
+		leftShadow.text = "Left Turning: " + fIn.ToString ("F") + "%";
+	}
+
+	public void RightTurningSlider(float fIn)
+	{
+		rightTurningPercent = fIn;
+		rightText.text = "Right Turning: " + fIn.ToString ("F") + "%";
+		rightShadow.text = "Right Turning: " + fIn.ToString ("F") + "%";
 	}
 
 	public void ChangeColliderOn()
