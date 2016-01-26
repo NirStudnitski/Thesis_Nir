@@ -45,7 +45,10 @@ public class Vehicle : MonoBehaviour {
 		if (-290f > transform.position.x || transform.position.x > 290f
 		    || -290f > transform.position.z || transform.position.z > 290f) 
 		{
+			
+
 			Destroy (this.gameObject);
+	//		GameController.activeVehicles.Remove (this);
 			//increment vehicle counter
 		}
 	}
