@@ -9,7 +9,7 @@ public class GameController : MonoBehaviour {
 
 
 	private float waitTime;
-	public VehicleList activeVList; 
+	public static VehicleList activeVList; 
 	float bla;
 	private int vehicleCounter;
 	public Text rateText, rateShadow;
@@ -19,22 +19,23 @@ public class GameController : MonoBehaviour {
 	private float leftTurningPercent, rightTurningPercent;
 	public Button collisionButton;
 	static public bool collisionOn;
+
+	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
-
-
 	private float TWO_PI = 6.28318f;
-
-
-
 	public GameObject[] vehicles;
 	float[] YCoor = { -2f, -0.2f, 0.4f, 0f,2.3f,0f,0f,0.3f,-2f,0f,0f,0f,0f };
 	private float[,] laneXZ = { {  -270f, -6.5f }, { -270f, -18f },
 								{  -6.5f, 270f }, { -18.3f, 270f },
 								{  270f, 6.5f }, { 270f, 18.5f },
-								{  6f, -270f }, { 18.3f, -270f }
-							};
+								{  6f, -270f }, { 18.3f, -270f }};
 
-	private float[] sizes = { 16f, 18f, 30f, 20f,12f,12f,12f,12f,12f,12f,12f,12f,12f };
+	//half each vehicle's length
+	private float[] sizes = { 8f, 9f, 15f, 10f,6f,6f,6f,6f,6f,6f,6f,6f,6f };
+	//half each vehicle's width
+	private float[] widths = { 3.5f, 4f, 4f, 3f,2.5f,2.5f,2.5f,2.5f,2.5f,2.5f,2.5f,2.5f,2.5f };
+	//half each vehicle's diagonal
+	private float[] diagonals = { 8.75f, 9.85f, 15.55f, 10.45f,6.5f,6.5f,6.5f,6.5f,6.5f,6.5f,6.5f,6.5f,6.5f };
 	//
 	//
 	//             !!!!!
@@ -42,6 +43,8 @@ public class GameController : MonoBehaviour {
 	//change this crap to collision detectors per lane that notify 'clear' via bool
 	//this array notifies when a lane is clear to have a new vehicle enter
 	private float[] clearTimes = { 0f, 0f, 0f, 0f, 0f, 0f,0f, 0f };
+	//---------------------------------------------------------------
+
 
 	// Use this for initialization
 	void Start () {
@@ -67,7 +70,8 @@ public class GameController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
-		
+		activeVList.UpdateList (Time.deltaTime);
+
 			
 	}
 
@@ -105,11 +109,28 @@ public class GameController : MonoBehaviour {
 				Vector3 spawnPosition = new Vector3 (laneXZ [lane, 0], YCoor [vehicleIndex], laneXZ [lane, 1]);
 				Quaternion spawnRotation = Quaternion.identity * Quaternion.Euler (0f, (lane / 2) * 90f, 0f);
 
+				Vector2 directionGiven= new Vector2 (0, 1);
+				switch (lane / 2) 
+				{
+					case 0:
+						directionGiven = new Vector2 (0, 1);
+						break;
+					case 1:
+						directionGiven = new Vector2 (1, 0);
+						break;
+					case 2:
+						directionGiven = new Vector2 (0, -1);
+						break;
+					case 3:
+						directionGiven = new Vector2 (-1, 0);
+						break;
+				}
 				GameObject vehicle =  (GameObject) Instantiate (vehicles [vehicleIndex], spawnPosition, spawnRotation);
 
 				vehicle.GetComponent<Vehicle>().SetSpeed (givenSpeed);
 				vehicle.GetComponent<Vehicle>().SetSize (sizes [vehicleIndex]);
-				vehicle.name = "" + vehicleCounter++;
+				vehicle.name = "" + ++vehicleCounter;
+
 
 
 				int assignedTurn = 0;
@@ -126,10 +147,12 @@ public class GameController : MonoBehaviour {
 				countShadow.text = "Vehicle Count: " + vehicleCounter;
 
 				activeVList.Add(new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-					vehicleCounter, givenSpeed, Time.time, 1f,1f); 
+					vehicleCounter, givenSpeed, sizes[vehicleIndex],widths[vehicleIndex], directionGiven); 
+				
 
-				//AddVehicle (vehicleIndex, assignedTurn, spawnPosition, givenSpeed); 
-				CheckFutureCollision ();
+			
+				activeVList.PrintListLocations ();
+				//CheckFutureCollision (lane);
 
 
 
@@ -181,11 +204,11 @@ public class GameController : MonoBehaviour {
 		
 	//aWidth represents half the width of a vehicle, aLength represents half the length
 	private bool FullCollisionDetection (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
-		float aLength, float bLength, Quaternion aDir, Quaternion bDir)
+		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
 		bool rtn = false;
-		if ((aIn.x - bIn.x) * (aIn.x - bIn.x) + (aIn.y - bIn.y) * (aIn.y - bIn.y) 
-			< (aWidth + bWidth) * (aWidth + bWidth))
+		if (Mathf.Pow(aIn.x - bIn.x,2) + Mathf.Pow(aIn.y - bIn.y,2)  
+			< Mathf.Pow(aWidth + bWidth,2))
 			rtn = true;
 		else 
 		{
@@ -227,9 +250,50 @@ public class GameController : MonoBehaviour {
 			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
 	}
 
-	private void CheckFutureCollision ()
+	private void CheckFutureCollision (int lane)
 	{
+		int numV = activeVList.lastIndex + 1;
+		LocationDirectionDU[] futureVehicles = new LocationDirectionDU[numV];
 
+		int numCloseV = 0, index = 0;
+
+
+		for (int i = 0; i < numV; i++) 
+		{
+			int tempLane = activeVList.GetLane (i);
+			bool closeLanes = false;
+			if (lane == tempLane) closeLanes = true; 
+			else if ((lane == tempLane+1 && lane%2==1) || (lane == tempLane-1 && lane%2==0)) closeLanes = true;
+
+			if (!closeLanes)
+			{
+				//check candidates for collision
+				Vector2 tempLoc = activeVList.GetCurrentPosition (i);
+				bool probableProximity = false;
+				//Debug.Log ("x = " + tempLoc.x + ", y = " + tempLoc.y);
+				if (Mathf.Abs(tempLoc.x) < 240f && Mathf.Abs(tempLoc.y) < 240f)
+					probableProximity = true;
+				if (!probableProximity) 
+				{
+					futureVehicles [index++] = new LocationDirectionDU (activeVList.GetSpeed (i), activeVList.GetCurrentPosition (i), 
+						activeVList.GetDirection (i), activeVList.GetTurnCounter (i), activeVList.GetLane (i), activeVList.GetTurnPlan (i),
+						activeVList.GetTurnInitiate (i));
+					numCloseV++;
+				}
+			}
+		}
+		//Debug.Log ("Num Close" +numCloseV);
+		for (int i = 0; i < numCloseV; i++) 
+		{
+			for (int j = 0; j < numCloseV; j++) 
+			{
+				bool bla = false;
+				if (i!=j) bla = FullCollisionDetection (futureVehicles[i].location, futureVehicles[j].location, 5f, 2f,
+					4f, 4f, futureVehicles[i].direction, futureVehicles[j].direction);
+
+			}
+		}
 	}
+
 
 }

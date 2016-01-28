@@ -1,10 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System;
 
 public class Vehicle : MonoBehaviour {
 
 	public float speed;
-	public float size;
+
+
+	//these are half the length and width of each vehicle
+	public float size, width;
 	public int lane;
 	private bool turnInitiate = false, noCollision = true;
 	public int turnPlan; // 0 = keep going straight, 1 = turn right, -1 = turn left 
@@ -46,11 +50,12 @@ public class Vehicle : MonoBehaviour {
 		    || -290f > transform.position.z || transform.position.z > 290f) 
 		{
 			
+			GameController.activeVList.Remove (Int32.Parse (this.name));
+			//GameController.activeVList.PrintList ();
 
 			Destroy (this.gameObject);
-	//		GameController.activeVehicles.Remove (this);
-			//increment vehicle counter
 		}
+
 	}
 
 	public void SetSpeed(float x)
