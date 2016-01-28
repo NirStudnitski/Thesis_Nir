@@ -24,6 +24,8 @@ public class VehicleStat {
 		halfWidth = halfWidthIn;
 		index = indexIn;
 		direction = dirIn;
+		Debug.Log ("New vehicle in location: (" + currentLocation.x + ", " + currentLocation.y +")");
+
 	}
 
 	public int GetName()
@@ -36,7 +38,7 @@ public class VehicleStat {
 	{
 		
 
-		currentLocation += direction * speed/deltaTime;
+		currentLocation += direction* speed*deltaTime;
 		if (turnPlan == 1) 
 		{
 			if (!turnInitiate ) if (-33f <currentLocation.x && currentLocation.x < 33f
@@ -44,7 +46,7 @@ public class VehicleStat {
 				turnInitiate = true;
 			if (turnInitiate && turnCounter <= 90) 
 			{
-				direction = RotateCW(direction, TWO_PI / 720f);
+				if (turnCounter>0) direction = RotateCCW(direction, TWO_PI / 360f);
 			
 				turnCounter++;
 			}
@@ -54,8 +56,9 @@ public class VehicleStat {
 			if (!turnInitiate) if (-39f < currentLocation.x && currentLocation.x < 39f
 				&& -39f < currentLocation.y && currentLocation.y < 39f)
 				turnInitiate = true;
-			if (turnInitiate && turnCounter <= 90) {
-				direction = RotateCCW(direction, TWO_PI / 360f);
+			if (turnInitiate && turnCounter <= 90) 
+			{
+				if (turnCounter>0)direction = RotateCW(direction, TWO_PI / 180f);
 
 				turnCounter+=2;
 			}

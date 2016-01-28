@@ -48,6 +48,7 @@
      <Compile Include="Assets\Scripts\CameraController.cs" />
      <Compile Include="Assets\Scripts\GameController.cs" />
      <Compile Include="Assets\Scripts\LocationDirectionDU.cs" />
+     <Compile Include="Assets\Scripts\QuadUnit.cs" />
      <Compile Include="Assets\Scripts\Vehicle.cs" />
      <Compile Include="Assets\Scripts\VehicleCollider.cs" />
      <Compile Include="Assets\Scripts\VehicleList.cs" />

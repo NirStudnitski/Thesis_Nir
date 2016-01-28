@@ -97,12 +97,22 @@ public class VehicleList : MonoBehaviour{
 		
 	public void UpdateList(float deltaTime)
 	{
-		for (int i=0;i < lastIndex; i++) activeVehicles [i].UpdateAndAdvance (deltaTime);
+		for (int i=0;i <= lastIndex; i++) activeVehicles [i].UpdateAndAdvance (deltaTime);
 	}
 
 	public float GetSpeed (int i)
 	{
 		return activeVehicles[i].speed;
+	}
+
+	public float GetLength (int i)
+	{
+		return activeVehicles[i].halfLength;
+	}
+
+	public float GetWidth (int i)
+	{
+		return activeVehicles[i].halfWidth;
 	}
 
 	public Vector2 GetCurrentPosition (int i)

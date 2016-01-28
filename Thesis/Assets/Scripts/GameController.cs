@@ -71,7 +71,7 @@ public class GameController : MonoBehaviour {
 	void Update () 
 	{
 		activeVList.UpdateList (Time.deltaTime);
-
+		activeVList.PrintListLocations ();
 			
 	}
 
@@ -112,17 +112,18 @@ public class GameController : MonoBehaviour {
 				Vector2 directionGiven= new Vector2 (0, 1);
 				switch (lane / 2) 
 				{
+					
 					case 0:
-						directionGiven = new Vector2 (0, 1);
-						break;
-					case 1:
 						directionGiven = new Vector2 (1, 0);
 						break;
-					case 2:
+					case 1:
 						directionGiven = new Vector2 (0, -1);
 						break;
-					case 3:
+					case 2:
 						directionGiven = new Vector2 (-1, 0);
+						break;
+					case 3:
+						directionGiven = new Vector2 (0, 1);
 						break;
 				}
 				GameObject vehicle =  (GameObject) Instantiate (vehicles [vehicleIndex], spawnPosition, spawnRotation);
@@ -151,7 +152,7 @@ public class GameController : MonoBehaviour {
 				
 
 			
-				activeVList.PrintListLocations ();
+				//activeVList.PrintListLocations ();
 				//CheckFutureCollision (lane);
 
 
