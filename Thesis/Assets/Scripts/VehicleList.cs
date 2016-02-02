@@ -24,10 +24,10 @@ public class VehicleList : MonoBehaviour{
 
 	public void Add(Vector2 spawnIn, int turnPlanIn, int laneIn, 
 					int nameIn, float speedIn,  
-		float halfLengthIn, float halfWidthIn, Vector2 dirIn)
+		float halfLengthIn, float halfWidthIn, Vector2 dirIn, int typeIn, float diagIn)
 	{
 		activeVehicles [++lastIndex] = new VehicleStat (spawnIn, turnPlanIn, laneIn, 
-								nameIn, speedIn,  halfLengthIn, halfWidthIn, lastIndex, dirIn);
+								nameIn, speedIn,  halfLengthIn, halfWidthIn, lastIndex, dirIn, typeIn, false, diagIn);
 		
 		
 	}	
@@ -133,6 +133,11 @@ public class VehicleList : MonoBehaviour{
 	public int GetLane (int i)
 	{
 		return activeVehicles [i].lane;
+	}
+
+	public int GetType (int i)
+	{
+		return activeVehicles [i].type;
 	}
 
 	public int GetTurnPlan (int i)
