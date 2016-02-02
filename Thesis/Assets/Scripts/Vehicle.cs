@@ -19,6 +19,7 @@ public class Vehicle : MonoBehaviour {
 
 	void Start () {
 	
+
 	}
 	
 	// Update is called once per frame
@@ -26,7 +27,7 @@ public class Vehicle : MonoBehaviour {
 
 		if (!GameController.pause) 
 		{
-			
+			Debug.Log ("inside moving vehicle, pause = " + GameController.pause);
 			GetComponent<Rigidbody> ().velocity = transform.right * speed;
 
 			if (turnPlan == 1) {
@@ -59,6 +60,7 @@ public class Vehicle : MonoBehaviour {
 				Destroy (this.gameObject);
 			}
 		}
+		else GetComponent<Rigidbody> ().velocity = new Vector3(0,0,0);
 
 	}
 

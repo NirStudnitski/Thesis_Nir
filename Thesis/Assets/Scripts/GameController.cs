@@ -5,21 +5,23 @@ using System.Collections.Generic;
 
 
 
+
 public class GameController : MonoBehaviour {
 
 
 	private float waitTime;
 	public static VehicleList activeVList; 
-	float bla;
+	float suggestedSpeed;
 	public int vehicleCounter;
+	public static int nameBeingChecked;
 	public static int numCloseV=0;
 	public Text rateText, rateShadow;
 	public Text countText, countShadow;
 	public Text leftText, leftShadow;
 	public Text rightText, rightShadow;
 	private float leftTurningPercent, rightTurningPercent;
-	public Button collisionButton;
-	static public bool collisionOn, pause = false;
+	public Button collisionButton, simulationButton;
+	static public bool collisionOn, simulationOn, pause, futureCollisionDetected = false, doneWithCheck = false;
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
@@ -55,8 +57,9 @@ public class GameController : MonoBehaviour {
 
 		vehicleCounter = 0;
 
-
+		pause = false;
 		collisionOn = true;
+		simulationOn = true;
 		waitTime = 4f;
 		Slider (0.25f);
 		LeftTurningSlider (25f);
@@ -65,7 +68,7 @@ public class GameController : MonoBehaviour {
 		activeVList = new VehicleList();
 
 
-		for (int i = 0; i < ACTIVE_V_MAX/4; i++) 
+		for (int i = 0; i < ACTIVE_V_MAX/10; i++) 
 		{
 			Vector3 spawnPosition = new Vector3 (10000, 0, 0);
 			Quaternion spawnRotation = Quaternion.identity;
@@ -85,7 +88,35 @@ public class GameController : MonoBehaviour {
 	{
 		if (!pause) activeVList.UpdateList (Time.deltaTime);
 
-		UpdateQuads (numCloseV, 20);
+		if (simulationOn) UpdateQuads (numCloseV, 4);
+		if (simulationOn && pause && doneWithCheck) 
+		{
+			doneWithCheck = false;
+
+			if (futureCollisionDetected) 
+			{
+				futureCollisionDetected = false;
+				suggestedSpeed += 0.1f;
+				//reset list
+				for (int i = 0; i < numCloseV; i++) 
+				{
+					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (i);
+					futureVehicles [i].direction = activeVList.GetDirection (i);
+					futureVehicles [i].turnInitiate = false;
+				}
+				futureVehicles [0].speed = suggestedSpeed;
+			} 
+			else 
+			{
+				Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
+				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+				temp.tag = "Untagged";
+				pause = false;
+			}
+
+
+		}
 
 			
 	}
@@ -141,10 +172,12 @@ public class GameController : MonoBehaviour {
 					int type = (vehicleIndex > 4 ? 4 : vehicleIndex);
 					vehicle.GetComponent<Vehicle> ().SetType (type);
 					vehicle.GetComponent<Vehicle> ().SetSpeed (givenSpeed);
+					suggestedSpeed = givenSpeed;
 					vehicle.GetComponent<Vehicle> ().SetSize (sizes [vehicleIndex]);
+					vehicle.tag = "Vehicle Checked";
 					vehicle.name = "" + ++vehicleCounter;
 
-
+					nameBeingChecked = vehicleCounter;
 
 					int assignedTurn = 0;
 					if (lane % 2 == 0)
@@ -164,7 +197,8 @@ public class GameController : MonoBehaviour {
 					
 					//begin prepping your shadow runners list
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						0, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], 0, directionGiven, type, true, diagonals [vehicleIndex]);
+						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], 0, directionGiven, type, true, diagonals [vehicleIndex]);
+					doneWithCheck = false;
 
 					CheckFutureCollision (lane);
 
@@ -205,6 +239,13 @@ public class GameController : MonoBehaviour {
 		collisionOn = !collisionOn;
 		if (collisionOn) collisionButton.GetComponentInChildren<Text>().text = "Collisions: ON";
 		else collisionButton.GetComponentInChildren<Text>().text = "Collisions: OFF";
+	}
+
+	public void ChangeSimulationOn()
+	{
+		simulationOn = !simulationOn;
+		if (simulationOn) simulationButton.GetComponentInChildren<Text>().text = "Alg. Simulations: ON";
+		else simulationButton.GetComponentInChildren<Text>().text = "Alg. Simulations: OFF";
 	}
 		
 
@@ -265,14 +306,16 @@ public class GameController : MonoBehaviour {
 
 	private void CheckFutureCollision (int lane)
 	{
+		
 		pause = true;
+
 		int numV = activeVList.lastIndex + 1;
 
 
 		numCloseV = 1; 
 		int index = 1;
 
-
+		//generate a list of vehicles
 		for (int i = 1; i < numV; i++) 
 		{
 			int tempLane = activeVList.GetLane (i);
@@ -294,7 +337,7 @@ public class GameController : MonoBehaviour {
 
 					futureVehicles [index++] = new VehicleStat (
 						activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
-						activeVList.GetLane (i), index, activeVList.GetSpeed (i), sizes[ activeVList.GetType (i)], 
+						activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes[ activeVList.GetType (i)], 
 						widths[ activeVList.GetType (i)], activeVList.GetIndex (i),
 						activeVList.GetDirection (i), activeVList.GetType (i), true, diagonals [activeVList.GetType (i)]);
 					numCloseV++;
@@ -302,9 +345,38 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
+		if (!simulationOn) 
+		{
+			
+
+			UpdateQuads (numCloseV, 200);
+
+			while (futureCollisionDetected) 
+			{
+				
+				futureCollisionDetected = false;
+				suggestedSpeed += 0.1f;
+				//reset list
+				for (int i = 0;i<numCloseV;i++)
+				{
+					futureVehicles[i].currentLocation = activeVList.GetCurrentPosition (i);
+					futureVehicles[i].direction = activeVList.GetDirection (i);
+					futureVehicles [i].turnInitiate = false;
+				}
+				futureVehicles[0].speed = suggestedSpeed;
+
+				UpdateQuads (numCloseV, 200);
+
+			} 
+
+			GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+			temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+			temp.tag = "Untagged";
+			futureCollisionDetected = false;
+			pause = false;
+		}
 
 
-		pause = false;
 	}
 
 

@@ -105,6 +105,11 @@ public class VehicleList : MonoBehaviour{
 		return activeVehicles[i].speed;
 	}
 
+	public void SetSpeed (int i, float speedIn)
+	{
+		activeVehicles[i].speed = speedIn;
+	}
+
 	public float GetLength (int i)
 	{
 		return activeVehicles[i].halfLength;
@@ -133,6 +138,11 @@ public class VehicleList : MonoBehaviour{
 	public int GetLane (int i)
 	{
 		return activeVehicles [i].lane;
+	}
+
+	public int GetName (int i)
+	{
+		return activeVehicles [i].name;
 	}
 
 	public int GetType (int i)

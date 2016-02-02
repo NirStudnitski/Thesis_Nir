@@ -40,7 +40,7 @@ public class VehicleStat  {
 
 	public void UpdateAndAdvance (float deltaTime)
 	{
-		//Debug.Log ("update and advance REGULAR");
+		
 
 		currentLocation += direction* speed*deltaTime;
 		if (turnPlan == 1) 
@@ -72,11 +72,12 @@ public class VehicleStat  {
 	//for fast updates of quads
 	public void UpdateAndAdvance (float deltaTime, int multiplier)
 	{
-		
-		for (int i=0;i<multiplier;i++)
+		int turnMultiplier = 5;
+		for (int i=0;i<multiplier && !GameController.futureCollisionDetected;i++)
 		{
+			
+			currentLocation += direction* speed*deltaTime*turnMultiplier;
 
-			currentLocation += direction* speed*deltaTime;
 			if (turnPlan == 1) 
 			{
 				if (!turnInitiate ) if (-33f <currentLocation.x && currentLocation.x < 33f
@@ -84,9 +85,9 @@ public class VehicleStat  {
 					turnInitiate = true;
 				if (turnInitiate && turnCounter <= 90) 
 				{
-					if (turnCounter>0) direction = RotateCCW(direction, TWO_PI / 360f);
+					if (turnCounter>0) direction = RotateCCW(direction, TWO_PI / (360f/turnMultiplier));
 
-					turnCounter++;
+					turnCounter+=turnMultiplier;
 				}
 			} 
 			else if (turnPlan == -1) 
@@ -96,21 +97,30 @@ public class VehicleStat  {
 					turnInitiate = true;
 				if (turnInitiate && turnCounter <= 90) 
 				{
-					if (turnCounter>0) direction = RotateCW(direction, TWO_PI / 180f);
+					if (turnCounter>0) direction = RotateCW(direction, TWO_PI / (180f/turnMultiplier));
 
-					turnCounter+=2;
+					turnCounter+=(2*turnMultiplier);
 				}
 			}
 
-			/*
-			 *v  NOW CHECK COLLISIONS 
-			 */
-			for (int j=0;j<GameController.numCloseV;j++)
+			if (!GameController.doneWithCheck) if (-290f > currentLocation.x || currentLocation.x > 290f
+			    || -290f > currentLocation.y || currentLocation.y > 290f) 
+				GameController.doneWithCheck = true;
+
+			//now check collision
+			if (name == GameController.nameBeingChecked && !GameController.futureCollisionDetected) for (int j=0;j<GameController.numCloseV;j++)
 			{
+				
 				if (name!= GameController.futureVehicles[j].name)
 				{
-					if (QuickCollisionDetection(currentLocation, GameController.futureVehicles[j].currentLocation,
-						halfDiag, GameController.futureVehicles[j].halfDiag)) Debug.Log("Collision");
+					
+						if (QuickCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation,
+							   halfDiag, GameController.futureVehicles [j].halfDiag)) 
+						{
+							Debug.Log ("Collision");
+							GameController.futureCollisionDetected = true;
+							GameController.doneWithCheck = true;
+						}
 				}
 			}
 		}

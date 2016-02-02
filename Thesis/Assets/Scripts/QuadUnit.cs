@@ -14,7 +14,7 @@ public class QuadUnit : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
-		if (index < GameController.numCloseV) 
+		if (index < GameController.numCloseV && GameController.simulationOn) 
 		{
 			
 			Vector2 finalTemp;
