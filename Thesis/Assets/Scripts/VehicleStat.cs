@@ -115,12 +115,16 @@ public class VehicleStat  {
 				{
 					
 						if (QuickCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation,
-							   halfDiag, GameController.futureVehicles [j].halfDiag)) 
-						{
-							Debug.Log ("Collision");
-							GameController.futureCollisionDetected = true;
-							GameController.doneWithCheck = true;
-						}
+							    halfDiag, GameController.futureVehicles [j].halfDiag)) 
+							if (FullCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation, 
+								halfWidth, GameController.futureVehicles [j].halfWidth,
+								halfLength, GameController.futureVehicles [j].halfLength,
+								direction, GameController.futureVehicles [j].direction))
+							{
+								Debug.Log ("Collision");
+								GameController.futureCollisionDetected = true;
+								GameController.doneWithCheck = true;
+							}
 				}
 			}
 		}

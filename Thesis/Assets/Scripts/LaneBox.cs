@@ -8,7 +8,7 @@ public class LaneBox : MonoBehaviour {
 	void OnTriggerExit(Collider other){
 
 		GameController.laneAvailable [lane] = true;
-		GameController.PrintLaneAvail ();
+
 
 
 	}

@@ -48,7 +48,7 @@ public class GameController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-
+			
 		vehicleCounter = 0;
 
 		pause = false;
@@ -82,7 +82,7 @@ public class GameController : MonoBehaviour {
 	{
 		if (!pause) activeVList.UpdateList (Time.deltaTime);
 
-		if (simulationOn) UpdateQuads (numCloseV, 4);
+		if (simulationOn) UpdateQuads (numCloseV, 1);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -97,8 +97,10 @@ public class GameController : MonoBehaviour {
 					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (i);
 					futureVehicles [i].direction = activeVList.GetDirection (i);
 					futureVehicles [i].turnInitiate = false;
+					futureVehicles [i].turnCounter = 0;
 				}
 				futureVehicles [0].speed = suggestedSpeed;
+
 			} 
 			else 
 			{
@@ -119,7 +121,7 @@ public class GameController : MonoBehaviour {
 	{
 		
 		int lane; 
-		float now, givenSpeed;
+		float givenSpeed;
 		int vehicleIndex = 0;
 		bool spawn = false;
 		while (true)
@@ -194,8 +196,9 @@ public class GameController : MonoBehaviour {
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], 0, directionGiven, type, true, diagonals [vehicleIndex]);
 					doneWithCheck = false;
+					futureCollisionDetected = false;
 					laneAvailable[lane] = false;
-					PrintLaneAvail ();
+
 
 					CheckFutureCollision (lane);
 
@@ -257,46 +260,202 @@ public class GameController : MonoBehaviour {
 	private bool FullCollisionDetection (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
+		bool runDiagnostic = false;
+		string rtnS = "";
+		Vector2 aDirTemp = aDir;
+		if (runDiagnostic) rtnS = "Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
+		             + bIn.x + ", " + bIn.y + "), \naDir(" + aDir.x + ", " + aDir.y + "), bDir("
+		             + bDir.x + ", " + bDir.y + ")\n";
+		
 		bool rtn = false;
-		if (Mathf.Pow(aIn.x - bIn.x,2) + Mathf.Pow(aIn.y - bIn.y,2)  
-			< Mathf.Pow(aWidth + bWidth,2))
+		if (Mathf.Pow (aIn.x - bIn.x, 2) + Mathf.Pow (aIn.y - bIn.y, 2)
+		    < Mathf.Pow (aWidth + bWidth, 2))
+		{
 			rtn = true;
+			if (runDiagnostic) Debug.Log ("only width detection \n" + rtnS);
+		}
 		else 
 		{
 			Vector2 aToB = new Vector2 (aIn.x - bIn.x, aIn.y - bIn.y);
-
+			if (runDiagnostic) rtnS += "aToB(" + aToB.x + ", " + aToB.y + ")\n";
 			Vector2 bTL = new Vector2 (-bWidth, bLength);
 			Vector2 bBR = new Vector2 (bWidth, -bLength);
 
-			float angle = bDir.y;
+			float angle;
 
-			aToB = RotateCCW (aToB, angle);
+			if (bDir.x == 0) 
+			{
+				if (bDir.y > 0) angle = 0;
+				else angle = TWO_PI / 2;
+			} 
+			else 
+			{
+				float alpha = Mathf.Atan (Mathf.Abs (bDir.y / bDir.x));
 
-			Vector2 aDirV2 = RotateCCW (new Vector2 (0f, 1f), TWO_PI - aDir.y);
-			aDirV2 = RotateCCW (aDirV2, angle);
-			Vector2 aPerp = RotateCCW (aDirV2, TWO_PI / 4);
-			aDirV2 *= aLength;
+				if (bDir.x * bDir.y > 0) 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f + alpha;
+					else angle = TWO_PI * 0.25f + alpha;
+				} 
+				else if (bDir.x * bDir.y == 0) 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f;
+					else angle = TWO_PI * 0.25f;
+				} 
+				else 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f - alpha;
+					else angle = angle = TWO_PI * 0.25f - alpha;
+				}
+			}
+
+			aToB = RotateCW (aToB, angle);
+			aDir = RotateCW (aDir, angle);
+			Vector2 aPerp = RotateCCW (aDir, TWO_PI / 4);
+			aDir *= aLength;
 			aPerp *= aWidth;
 
 			//generate a's points in the new system
-			Vector2[] aPoints = {aToB + aDirV2 + aPerp, aToB + aDirV2 - aPerp, 
-				aToB - aDirV2 + aPerp, aToB - aDirV2 - aPerp
+			Vector2[] aPoints = {aToB + aDir + aPerp, aToB + aDir - aPerp, 
+				aToB - aDir + aPerp, aToB - aDir - aPerp
 			};
 
 
-			for (int i = 0; i < 4; i++) {
+			if (runDiagnostic) rtnS +="Out: \naPoints[0](" + aPoints[0].x + ", " + aPoints[0].y + ")\n" 
+				+ "aPoints[1](" + aPoints[1].x + ", " + aPoints[1].y + ")\n"
+				+ "aPoints[2](" + aPoints[2].x + ", " + aPoints[2].y + ")\n"
+				+ "aPoints[3](" + aPoints[3].x + ", " + aPoints[3].y + ")\n"
+
+				+ "bTL(" + bTL.x + ", " + bTL.y + ")\n"
+				+ "bBR(" + bBR.x + ", " + bBR.y + ")\n"
+
+				+"\naDir(" + aDir.x + ", " + aDir.y + "), bDir("
+				+ bDir.x + ", " + bDir.y + ")\n"
+				+"aToB(" + aToB.x + ", " + aToB.y + ")\n";
+			
+			for (int i = 0; i < 4; i++) 
+			{
 				if (aPoints [i].x < bBR.x && aPoints [i].x > bTL.x)
-				if (aPoints [i].y > bBR.y && aPoints [i].y < bTL.y) {
+					if (aPoints [i].y > bBR.y && aPoints [i].y < bTL.y) 
+					{
+						rtn = true;
+						i += 4;
+					}
+			}
+		}
+		if (runDiagnostic)
+		{
+			rtnS += "\n\n\n Collision = " + rtn;
+			Debug.Log (rtnS);
+		}
+		if (!rtn)
+			rtn = FullCollisionDetectionReverse (bIn, aIn, bWidth, aWidth,
+				bLength, aLength, bDir, aDirTemp);
+		return rtn;
+	}
+
+	private bool FullCollisionDetectionReverse (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
+		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
+	{
+		bool runDiagnostic = false;
+		string rtnS = "";
+		if (runDiagnostic) rtnS = "Reverse Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
+				+ bIn.x + ", " + bIn.y + "), \naDir(" + aDir.x + ", " + aDir.y + "), bDir("
+				+ bDir.x + ", " + bDir.y + ")\n";
+
+		bool rtn = false;
+		if (Mathf.Pow (aIn.x - bIn.x, 2) + Mathf.Pow (aIn.y - bIn.y, 2)
+			< Mathf.Pow (aWidth + bWidth, 2))
+		{
+			rtn = true;
+			if (runDiagnostic) Debug.Log ("only width detection \n" + rtnS);
+		}
+		else 
+		{
+			Vector2 aToB = new Vector2 (aIn.x - bIn.x, aIn.y - bIn.y);
+			if (runDiagnostic) rtnS += "aToB(" + aToB.x + ", " + aToB.y + ")\n";
+			Vector2 bTL = new Vector2 (-bWidth, bLength);
+			Vector2 bBR = new Vector2 (bWidth, -bLength);
+
+			float angle;
+
+			if (bDir.x == 0) 
+			{
+				if (bDir.y > 0) angle = 0;
+				else angle = TWO_PI / 2;
+			} 
+			else 
+			{
+				float alpha = Mathf.Atan (Mathf.Abs (bDir.y / bDir.x));
+
+				if (bDir.x * bDir.y > 0) 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f + alpha;
+					else angle = TWO_PI * 0.25f + alpha;
+				} 
+				else if (bDir.x * bDir.y == 0) 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f;
+					else angle = TWO_PI * 0.25f;
+				} 
+				else 
+				{
+					if (bDir.x > 0) angle = TWO_PI * 0.75f - alpha;
+					else angle = angle = TWO_PI * 0.25f - alpha;
+				}
+			}
+
+			aToB = RotateCW (aToB, angle);
+			aDir = RotateCW (aDir, angle);
+			Vector2 aPerp = RotateCCW (aDir, TWO_PI / 4);
+			aDir *= aLength;
+			aPerp *= aWidth;
+
+			//generate a's points in the new system
+			Vector2[] aPoints = {aToB + aDir + aPerp, aToB + aDir - aPerp, 
+				aToB - aDir + aPerp, aToB - aDir - aPerp
+			};
+
+
+			if (runDiagnostic) rtnS +="Out: \naPoints[0](" + aPoints[0].x + ", " + aPoints[0].y + ")\n" 
+					+ "aPoints[1](" + aPoints[1].x + ", " + aPoints[1].y + ")\n"
+					+ "aPoints[2](" + aPoints[2].x + ", " + aPoints[2].y + ")\n"
+					+ "aPoints[3](" + aPoints[3].x + ", " + aPoints[3].y + ")\n"
+
+					+ "bTL(" + bTL.x + ", " + bTL.y + ")\n"
+					+ "bBR(" + bBR.x + ", " + bBR.y + ")\n"
+
+					+"\naDir(" + aDir.x + ", " + aDir.y + "), bDir("
+					+ bDir.x + ", " + bDir.y + ")\n"
+					+"aToB(" + aToB.x + ", " + aToB.y + ")\n";
+
+			for (int i = 0; i < 4; i++) 
+			{
+				if (aPoints [i].x < bBR.x && aPoints [i].x > bTL.x)
+				if (aPoints [i].y > bBR.y && aPoints [i].y < bTL.y) 
+				{
 					rtn = true;
 					i += 4;
 				}
 			}
+		}
+		if (runDiagnostic)
+		{
+			rtnS += "\n\n\n Collision = " + rtn;
+			Debug.Log (rtnS);
 		}
 		return rtn;
 	}
 
 	private Vector2 RotateCCW (Vector2 vIn, float angle)
 	{
+		return new Vector2 (vIn.x * Mathf.Cos (angle) - vIn.y * Mathf.Sin (angle),
+			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
+	}
+
+	private Vector2 RotateCW (Vector2 vIn, float angle)
+	{
+		angle = TWO_PI - angle;
 		return new Vector2 (vIn.x * Mathf.Cos (angle) - vIn.y * Mathf.Sin (angle),
 			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
 	}
@@ -359,6 +518,7 @@ public class GameController : MonoBehaviour {
 					futureVehicles[i].currentLocation = activeVList.GetCurrentPosition (i);
 					futureVehicles[i].direction = activeVList.GetDirection (i);
 					futureVehicles [i].turnInitiate = false;
+					futureVehicles [i].turnCounter = 0;
 				}
 				futureVehicles[0].speed = suggestedSpeed;
 
@@ -369,8 +529,9 @@ public class GameController : MonoBehaviour {
 			GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
 			temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 			temp.tag = "Untagged";
-			futureCollisionDetected = false;
+			futureCollisionDetected = false; 
 			pause = false;
+
 		}
 
 
@@ -388,7 +549,7 @@ public class GameController : MonoBehaviour {
 
 	public static void PrintLaneAvail()
 	{
-		string rtn = "Lanes available:";
+		string rtn = "Lanes available: ";
 		for (int i = 0; i < 8; i++)
 			rtn += i + ": " + laneAvailable [i] + ", ";
 		Debug.Log (rtn);
