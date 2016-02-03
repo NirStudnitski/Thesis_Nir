@@ -27,7 +27,7 @@ public class Vehicle : MonoBehaviour {
 
 		if (!GameController.pause) 
 		{
-			Debug.Log ("inside moving vehicle, pause = " + GameController.pause);
+			
 			GetComponent<Rigidbody> ().velocity = transform.right * speed;
 
 			if (turnPlan == 1) {

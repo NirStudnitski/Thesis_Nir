@@ -34,20 +34,14 @@ public class GameController : MonoBehaviour {
 								{  -6.5f, 270f }, { -18.3f, 270f },
 								{  270f, 6.5f }, { 270f, 18.5f },
 								{  6f, -270f }, { 18.3f, -270f }};
-
+	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
 	//half each vehicle's length
 	private float[] sizes = { 8f, 9f, 15f, 10f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f };
 	//half each vehicle's width
 	private float[] widths = { 3.5f, 4f, 4f, 3f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f };
 	//half each vehicle's diagonal
 	private float[] diagonals = { 8.75f, 9.85f, 15.55f, 10.45f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f };
-	//
-	//
-	//             !!!!!
-	//
-	//change this crap to collision detectors per lane that notify 'clear' via bool
-	//this array notifies when a lane is clear to have a new vehicle enter
-	private float[] clearTimes = { 0f, 0f, 0f, 0f, 0f, 0f,0f, 0f };
+
 	//---------------------------------------------------------------
 
 
@@ -108,7 +102,7 @@ public class GameController : MonoBehaviour {
 			} 
 			else 
 			{
-				Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
+				//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
 				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 				temp.tag = "Untagged";
@@ -130,16 +124,17 @@ public class GameController : MonoBehaviour {
 		bool spawn = false;
 		while (true)
 		{
+			spawn = false;
 			if (!pause) 
 			{
 				vehicleIndex = Random.Range (0, 13);
 				lane = Random.Range (0, 8);
-				now = Time.time;
+
 				givenSpeed = 40f;
 
 				for (int i = 0; i < 8; i++) {
-				
-					if (now < clearTimes [lane]) {
+
+					if (!laneAvailable[lane]) {
 						lane++;
 						lane %= 8;
 					} else {
@@ -187,7 +182,7 @@ public class GameController : MonoBehaviour {
 				
 					vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 					vehicle.GetComponent<Vehicle> ().SetLane (lane); 
-					clearTimes [lane] = now + (30f / givenSpeed);
+
 
 					countText.text = "Vehicle Count: " + vehicleCounter;
 					countShadow.text = "Vehicle Count: " + vehicleCounter;
@@ -199,6 +194,8 @@ public class GameController : MonoBehaviour {
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], 0, directionGiven, type, true, diagonals [vehicleIndex]);
 					doneWithCheck = false;
+					laneAvailable[lane] = false;
+					PrintLaneAvail ();
 
 					CheckFutureCollision (lane);
 
@@ -387,6 +384,14 @@ public class GameController : MonoBehaviour {
 		{
 			futureVehicles[i].UpdateAndAdvance(delta, multiplier);
 		}
+	}
+
+	public static void PrintLaneAvail()
+	{
+		string rtn = "Lanes available:";
+		for (int i = 0; i < 8; i++)
+			rtn += i + ": " + laneAvailable [i] + ", ";
+		Debug.Log (rtn);
 	}
 
 }
