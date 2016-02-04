@@ -25,7 +25,7 @@ public class GameController : MonoBehaviour {
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
-	private float TWO_PI = 6.28318f;
+	private static float TWO_PI = 6.28318f;
 	public GameObject[] vehicles;
 	public GameObject quad;
 	public static VehicleStat[] futureVehicles = new VehicleStat[ACTIVE_V_MAX];
@@ -40,7 +40,7 @@ public class GameController : MonoBehaviour {
 	//half each vehicle's width
 	private float[] widths = { 3.5f, 4f, 4f, 3f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f };
 	//half each vehicle's diagonal
-	private float[] diagonals = { 8.75f, 9.85f, 15.55f, 10.45f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f,7.2f };
+	private float[] diagonals = { 8.9f, 10f, 15.7f, 10.6f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f };
 
 	//---------------------------------------------------------------
 
@@ -80,9 +80,12 @@ public class GameController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () 
 	{
+
+		//ShowQuadData ();
+
 		if (!pause) activeVList.UpdateList (Time.deltaTime);
 
-		if (simulationOn) UpdateQuads (numCloseV, 1);
+		if (simulationOn) UpdateQuads (numCloseV, 5);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -250,17 +253,19 @@ public class GameController : MonoBehaviour {
 		
 
 	//aDiag represents half the diagonal 
-	private bool QuickCollisionDetection (Vector2 aIn, Vector2 bIn, float aDiag, float bDiag)
+	public static bool QuickCollisionDetection (Vector2 aIn, Vector2 bIn, float aDiag, float bDiag)
 	{
+		//Debug.Log ("QUICK triggered");
 		return (aIn.x -bIn.x)*(aIn.x -bIn.x) + (aIn.y -bIn.y)*(aIn.y -bIn.y) < (aDiag + bDiag)*(aDiag + bDiag);
 			
 	}
 		
 	//aWidth represents half the width of a vehicle, aLength represents half the length
-	private bool FullCollisionDetection (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
+	public static bool FullCollisionDetection (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
-		bool runDiagnostic = false;
+		//Debug.Log ("FULL triggered");
+		bool runDiagnostic = true;
 		string rtnS = "";
 		Vector2 aDirTemp = aDir;
 		if (runDiagnostic) rtnS = "Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
@@ -354,10 +359,11 @@ public class GameController : MonoBehaviour {
 		return rtn;
 	}
 
-	private bool FullCollisionDetectionReverse (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
+	public static bool FullCollisionDetectionReverse (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
-		bool runDiagnostic = false;
+		///Debug.Log ("REVERSE triggered");
+		bool runDiagnostic = true;
 		string rtnS = "";
 		if (runDiagnostic) rtnS = "Reverse Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
 				+ bIn.x + ", " + bIn.y + "), \naDir(" + aDir.x + ", " + aDir.y + "), bDir("
@@ -447,13 +453,13 @@ public class GameController : MonoBehaviour {
 		return rtn;
 	}
 
-	private Vector2 RotateCCW (Vector2 vIn, float angle)
+	private static Vector2 RotateCCW (Vector2 vIn, float angle)
 	{
 		return new Vector2 (vIn.x * Mathf.Cos (angle) - vIn.y * Mathf.Sin (angle),
 			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
 	}
 
-	private Vector2 RotateCW (Vector2 vIn, float angle)
+	private static Vector2 RotateCW (Vector2 vIn, float angle)
 	{
 		angle = TWO_PI - angle;
 		return new Vector2 (vIn.x * Mathf.Cos (angle) - vIn.y * Mathf.Sin (angle),
@@ -552,6 +558,22 @@ public class GameController : MonoBehaviour {
 		string rtn = "Lanes available: ";
 		for (int i = 0; i < 8; i++)
 			rtn += i + ": " + laneAvailable [i] + ", ";
+		Debug.Log (rtn);
+	}
+
+
+	private void ShowQuadData()
+	{
+		string rtn = "";
+		for (int i = 0;i<numCloseV;i++)
+		{
+			rtn += "futureVehicle[" + i + "].location = (" + futureVehicles [i].currentLocation.x + ", " + futureVehicles [i].currentLocation.y + ")\n";
+			rtn += "futureVehicle[" + i + "].direction = (" + futureVehicles [i].direction.x + ", " + futureVehicles [i].direction.y + ")\n";
+			rtn += "futureVehicle[" + i + "].halfLength = " + futureVehicles [i].halfLength + "\n";
+			rtn += "futureVehicle[" + i + "].halfWidth = " + futureVehicles [i].halfWidth + "\n\n\n";
+
+
+		}
 		Debug.Log (rtn);
 	}
 
