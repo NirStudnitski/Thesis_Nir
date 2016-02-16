@@ -23,7 +23,7 @@ public class VehicleStat  {
 		speed = speedIn;
 		halfLength = halfLengthIn;
 		halfWidth = halfWidthIn;
-		index = indexIn;
+		index = indexIn; // the index in VList of the vehicle
 		direction = dirIn;
 		type = typeIn;
 		isQuad = isQuadIn;
@@ -103,33 +103,49 @@ public class VehicleStat  {
 				}
 			}
 
-			if (!GameController.doneWithCheck) if (-290f > currentLocation.x || currentLocation.x > 290f
-			    || -290f > currentLocation.y || currentLocation.y > 290f) 
+			if (!GameController.doneWithCheck)
+			if (-290f > currentLocation.x || currentLocation.x > 290f
+			                                       || -290f > currentLocation.y || currentLocation.y > 290f)
 				GameController.doneWithCheck = true;
-
+			
+			string bla = "";
 			//now check collision
-			if (name == GameController.nameBeingChecked && !GameController.futureCollisionDetected) 
-				for (int j=0;j<GameController.numCloseV;j++)
+			if (name == GameController.nameBeingChecked ) 
+			{
+				bla += "name = " + name + "\n";
+				if (!GameController.futureCollisionDetected)
 				{
-					
-					if (name!= GameController.futureVehicles[j].name)
+					bla += "future collision = " + GameController.futureCollisionDetected + "\n";
+					for (int j = 0; j < GameController.numCloseV; j++)
 					{
-						
-						if (GameController.QuickCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation,
-								    halfDiag, GameController.futureVehicles [j].halfDiag))
+					
+						if (name != GameController.futureVehicles [j].name)
+						{
+							bla +=name +"!="+ GameController.futureVehicles [j].name + "\n";
+							bla += "current Location = (" + currentLocation.x + ", " + currentLocation.y + ")\n";
+							bla += "B current Location = (" + GameController.futureVehicles [j].currentLocation.x + ", " + GameController.futureVehicles [j].currentLocation.y + ")\n";
+							bla += "diag = " + halfDiag+ ")\n";
+							bla += "B diag = " + GameController.futureVehicles [j].halfDiag+ ")\n";
 
-							if (GameController.FullCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation, 
-									    halfWidth, GameController.futureVehicles [j].halfWidth,
-									    halfLength, GameController.futureVehicles [j].halfLength,
-									    direction, GameController.futureVehicles [j].direction))
+							if (GameController.QuickCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation,
+									    halfDiag, GameController.futureVehicles [j].halfDiag))
 							{
-								Debug.Log ("Collision");
-								GameController.futureCollisionDetected = true;
-								GameController.doneWithCheck = true;
+								bla+="quick was positive\n";
+								if (GameController.FullCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation, 
+									   halfWidth, GameController.futureVehicles [j].halfWidth,
+									   halfLength, GameController.futureVehicles [j].halfLength,
+									   direction, GameController.futureVehicles [j].direction))
+								{
+									Debug.Log ("Collision");
+									GameController.futureCollisionDetected = true;
+									GameController.doneWithCheck = true;
+								}
 							}
 							
+						}
 					}
 				}
+			} //Debug.Log (bla);
 		}
 	}
 

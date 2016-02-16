@@ -30,35 +30,36 @@ public class Vehicle : MonoBehaviour {
 			
 			GetComponent<Rigidbody> ().velocity = transform.right * speed;
 
-			if (turnPlan == 1) {
+			if (turnPlan == 1) 
+			{
 				if (!turnInitiate)
 				if (-33f < transform.position.x && transform.position.x < 33f
-				                       && -33f < transform.position.z && transform.position.z < 33f)
+				    && -33f < transform.position.z && transform.position.z < 33f)
 					turnInitiate = true;
+
 				if (noCollision)
-				if (turnInitiate && turnCounter <= 90) {
-					transform.rotation = Quaternion.Euler (0f, -turnCounter + (lane / 2) * 90f, 0f);
-					turnCounter++;
+				{
+					if (turnInitiate && turnCounter <= 90)
+					{
+						transform.rotation = Quaternion.Euler (0f, -turnCounter + (lane / 2) * 90f, 0f);
+						turnCounter++;
+					}
 				}
-			} else if (turnPlan == -1) {
+			} 
+			else if (turnPlan == -1) 
+			{
 				if (!turnInitiate)
 				if (-39f < transform.position.x && transform.position.x < 39f
-				                      && -39f < transform.position.z && transform.position.z < 39f)
-					turnInitiate = true;
+				    && -39f < transform.position.z && transform.position.z < 39f)
+				turnInitiate = true;
+
 				if (noCollision)
 				if (turnInitiate && turnCounter <= 90) {
 					transform.rotation = Quaternion.Euler (0f, turnCounter + (lane / 2) * 90f, 0f);
 					turnCounter += 2;
 				}
 			}
-			if (-290f > transform.position.x || transform.position.x > 290f
-			   || -290f > transform.position.z || transform.position.z > 290f) {
-			
-				GameController.activeVList.Remove (Int32.Parse (this.name));
-				//GameController.activeVList.PrintList ();
 
-				Destroy (this.gameObject);
-			}
 		}
 		else GetComponent<Rigidbody> ().velocity = new Vector3(0,0,0);
 

@@ -55,7 +55,7 @@ public class GameController : MonoBehaviour {
 		collisionOn = true;
 		simulationOn = true;
 		waitTime = 4f;
-		Slider (0.25f);
+		Slider (2.25f);
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
@@ -84,8 +84,9 @@ public class GameController : MonoBehaviour {
 		//ShowQuadData ();
 
 		if (!pause) activeVList.UpdateList (Time.deltaTime);
+		//activeVList.PrintList();
 
-		if (simulationOn) UpdateQuads (numCloseV, 5);
+		if (simulationOn) UpdateQuads (numCloseV, 1);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -97,10 +98,13 @@ public class GameController : MonoBehaviour {
 				//reset list
 				for (int i = 0; i < numCloseV; i++) 
 				{
-					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (i);
-					futureVehicles [i].direction = activeVList.GetDirection (i);
-					futureVehicles [i].turnInitiate = false;
-					futureVehicles [i].turnCounter = 0;
+					ShowQuadData ();
+					activeVList.PrintList ();
+					Debug.Log ("index of "+ i + " = "+ futureVehicles [i].index);
+					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
+					futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
+					futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
+					futureVehicles [i].turnCounter = activeVList.GetTurnCounter (futureVehicles [i].index);
 				}
 				futureVehicles [0].speed = suggestedSpeed;
 
@@ -110,6 +114,7 @@ public class GameController : MonoBehaviour {
 				//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
 				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+				activeVList.SetSpeed (activeVList.lastIndex, suggestedSpeed);
 				temp.tag = "Untagged";
 				pause = false;
 			}
@@ -192,12 +197,13 @@ public class GameController : MonoBehaviour {
 					countText.text = "Vehicle Count: " + vehicleCounter;
 					countShadow.text = "Vehicle Count: " + vehicleCounter;
 
+					Debug.Log ("before last index = " + activeVList.lastIndex);
 					activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, type, diagonals [vehicleIndex]); 
-					
+					Debug.Log ("after last index = " + activeVList.lastIndex);
 					//begin prepping your shadow runners list
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], 0, directionGiven, type, true, diagonals [vehicleIndex]);
+						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], activeVList.lastIndex, directionGiven, type, true, diagonals [vehicleIndex]);
 					doneWithCheck = false;
 					futureCollisionDetected = false;
 					laneAvailable[lane] = false;
@@ -210,7 +216,6 @@ public class GameController : MonoBehaviour {
 			}
 			yield return new WaitForSeconds (Random.Range(0.90f, 1.10f)*waitTime);
 		}
-
 
 	}
 
@@ -247,6 +252,7 @@ public class GameController : MonoBehaviour {
 	public void ChangeSimulationOn()
 	{
 		simulationOn = !simulationOn;
+		pause = false;
 		if (simulationOn) simulationButton.GetComponentInChildren<Text>().text = "Alg. Simulations: ON";
 		else simulationButton.GetComponentInChildren<Text>().text = "Alg. Simulations: OFF";
 	}
@@ -255,7 +261,7 @@ public class GameController : MonoBehaviour {
 	//aDiag represents half the diagonal 
 	public static bool QuickCollisionDetection (Vector2 aIn, Vector2 bIn, float aDiag, float bDiag)
 	{
-		//Debug.Log ("QUICK triggered");
+		Debug.Log ("QUICK triggered");
 		return (aIn.x -bIn.x)*(aIn.x -bIn.x) + (aIn.y -bIn.y)*(aIn.y -bIn.y) < (aDiag + bDiag)*(aDiag + bDiag);
 			
 	}
@@ -265,7 +271,7 @@ public class GameController : MonoBehaviour {
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
 		//Debug.Log ("FULL triggered");
-		bool runDiagnostic = true;
+		bool runDiagnostic = false;
 		string rtnS = "";
 		Vector2 aDirTemp = aDir;
 		if (runDiagnostic) rtnS = "Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
@@ -363,7 +369,7 @@ public class GameController : MonoBehaviour {
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
 		///Debug.Log ("REVERSE triggered");
-		bool runDiagnostic = true;
+		bool runDiagnostic = false;
 		string rtnS = "";
 		if (runDiagnostic) rtnS = "Reverse Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
 				+ bIn.x + ", " + bIn.y + "), \naDir(" + aDir.x + ", " + aDir.y + "), bDir("
@@ -468,45 +474,48 @@ public class GameController : MonoBehaviour {
 
 	private void CheckFutureCollision (int lane)
 	{
-		
-		pause = true;
-
-		int numV = activeVList.lastIndex + 1;
-
-
-		numCloseV = 1; 
-		int index = 1;
-
-		//generate a list of vehicles
-		for (int i = 1; i < numV; i++) 
+		if (simulationOn)
 		{
-			int tempLane = activeVList.GetLane (i);
-			bool closeLanes = false;
-			if (lane == tempLane) closeLanes = true; 
-			else if ((lane == tempLane+1 && lane%2==1) || (lane == tempLane-1 && lane%2==0)) closeLanes = true;
+			pause = true;
 
-			if (!closeLanes)
+
+			numCloseV = 1; 
+			int index = 1;
+
+			//generate a list of vehicles
+			for (int i = 0; i < activeVList.lastIndex ; i++)
 			{
-				//check candidates for collision
-				Vector2 tempLoc = activeVList.GetCurrentPosition (i);
-				bool probableProximity = false;
-				//Debug.Log ("x = " + tempLoc.x + ", y = " + tempLoc.y);
-				if (Mathf.Abs(tempLoc.x) < 240f && Mathf.Abs(tempLoc.y) < 240f)
-					probableProximity = true;
-				if (!probableProximity) 
+				int tempLane = activeVList.GetLane (i);
+				bool closeLanes = false;
+				if (lane == tempLane)
+					closeLanes = true;
+				else if ((lane == tempLane + 1 && lane % 2 == 1) || (lane == tempLane - 1 && lane % 2 == 0))
+					closeLanes = true;
+
+				if (!closeLanes)
 				{
+					//check candidates for collision
+					Vector2 tempLoc = activeVList.GetCurrentPosition (i);
+					bool probableProximity = false;
+					//Debug.Log ("x = " + tempLoc.x + ", y = " + tempLoc.y);
+					if (Mathf.Abs (tempLoc.x) > 220f || Mathf.Abs (tempLoc.y) > 220f)
+						probableProximity = true;
+					if (probableProximity)
+					{
 
-
-					futureVehicles [index++] = new VehicleStat (
-						activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
-						activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes[ activeVList.GetType (i)], 
-						widths[ activeVList.GetType (i)], activeVList.GetIndex (i),
-						activeVList.GetDirection (i), activeVList.GetType (i), true, diagonals [activeVList.GetType (i)]);
-					numCloseV++;
+						//Debug.Log("for future vehicle "+ (index) + " the index given is " + activeVList.GetIndex (i));
+						futureVehicles [index++] = new VehicleStat (
+							activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
+							activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes [activeVList.GetType (i)], 
+							widths [activeVList.GetType (i)], activeVList.GetIndex (i),
+							activeVList.GetDirection (i), activeVList.GetType (i), true, diagonals [activeVList.GetType (i)]);
+						numCloseV++;
+					}
 				}
 			}
-		}
-
+		} 
+		else pause = false;
+		/*
 		if (!simulationOn) 
 		{
 			
@@ -538,7 +547,7 @@ public class GameController : MonoBehaviour {
 			futureCollisionDetected = false; 
 			pause = false;
 
-		}
+		}*/
 
 
 	}
@@ -570,11 +579,13 @@ public class GameController : MonoBehaviour {
 			rtn += "futureVehicle[" + i + "].location = (" + futureVehicles [i].currentLocation.x + ", " + futureVehicles [i].currentLocation.y + ")\n";
 			rtn += "futureVehicle[" + i + "].direction = (" + futureVehicles [i].direction.x + ", " + futureVehicles [i].direction.y + ")\n";
 			rtn += "futureVehicle[" + i + "].halfLength = " + futureVehicles [i].halfLength + "\n";
-			rtn += "futureVehicle[" + i + "].halfWidth = " + futureVehicles [i].halfWidth + "\n\n\n";
+			rtn += "futureVehicle[" + i + "].halfWidth = " + futureVehicles [i].halfWidth + "\n";
+			rtn += "futureVehicle[" + i + "].index = " + futureVehicles [i].index + "\n\n\n";
 
 
 		}
 		Debug.Log (rtn);
 	}
+
 
 }

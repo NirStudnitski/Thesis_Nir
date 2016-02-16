@@ -50,7 +50,8 @@ public class VehicleList : MonoBehaviour{
 		int index = -1;
 		string listS = "Last Index: " + lastIndex + " Active vehicles: ";
 
-		while (++index <= lastIndex) listS +=activeVehicles [index].name + ", ";
+		while (++index <= lastIndex) listS +=activeVehicles [index].name 
+				+ " turning=" +activeVehicles [index].turnPlan+ ", the index is " + activeVehicles [index].index + "\n";
 
 		Debug.Log (listS + "\n");
 	}
@@ -88,11 +89,9 @@ public class VehicleList : MonoBehaviour{
 		return activeVehicles[i];
 	}
 
-	public int GetIndex(int nameIn)
+	public int GetIndex(int index)
 	{
-		int index = -1;
-		while (++index <= lastIndex) if (activeVehicles [index].name == nameIn) break;
-		return index;
+		return activeVehicles [index].index;
 	}
 		
 	public void UpdateList(float deltaTime)
