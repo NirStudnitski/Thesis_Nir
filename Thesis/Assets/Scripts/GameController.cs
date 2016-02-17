@@ -25,7 +25,9 @@ public class GameController : MonoBehaviour {
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
-	private static float TWO_PI = 6.28318f;
+
+	public const float DELTA = 0.0160000f, rR = 33f, rL = 33f; // for unity's delta time inaccuracies
+	private static float TWO_PI = 6.283185307f;
 	public GameObject[] vehicles;
 	public GameObject quad;
 	public static VehicleStat[] futureVehicles = new VehicleStat[ACTIVE_V_MAX];
@@ -34,13 +36,32 @@ public class GameController : MonoBehaviour {
 								{  -6.5f, 270f }, { -18.3f, 270f },
 								{  270f, 6.5f }, { 270f, 18.5f },
 								{  6f, -270f }, { 18.3f, -270f }};
+
+
+	static public Vector2[] centersOfRot = 
+	{
+		new Vector2 (-39f, -6.5f+rL), new Vector2 (-33f, -18f-rR),
+		new Vector2 (-6.5f+rL , 39f), new Vector2 (-18f-rR, 33f),
+		new Vector2 (39f, 6.5f-rL),   new Vector2 (33f, 18.5f+rR),
+		new Vector2 (6.5f-rL ,-39f), new Vector2 (18.3f+rR, -33f),
+	};
+
+	static public Vector3[] rotators = {
+		new Vector3 (0, 0, -rL), new Vector3 (0, 0, rR),
+		new Vector3 (-rL, 0, 0), new Vector3 (rR,0,0),
+		new Vector3 (0, 0, rL), new Vector3 (0, 0, -rR),
+		new Vector3 (rL, 0, 0), new Vector3 (-rR,0,0)
+	};
+
+
+
 	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
 	//half each vehicle's length
-	private float[] sizes = { 8f, 9f, 15f, 10f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f,6.6f };
+	private float[] sizes = { 8.2f, 9.2f, 15.2f, 10.2f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f };
 	//half each vehicle's width
-	private float[] widths = { 3.5f, 4f, 4f, 3f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f,2.7f };
+	private float[] widths = { 3.6f, 4.1f, 4.1f, 3.1f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f };
 	//half each vehicle's diagonal
-	private float[] diagonals = { 8.9f, 10f, 15.7f, 10.6f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f,7.3f };
+	private float[] diagonals = { 8.955f, 10.07f, 15.75f, 10.65f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f };
 
 	//---------------------------------------------------------------
 
@@ -55,7 +76,7 @@ public class GameController : MonoBehaviour {
 		collisionOn = true;
 		simulationOn = true;
 		waitTime = 4f;
-		Slider (2.25f);
+		Slider (0.25f);
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
@@ -81,12 +102,12 @@ public class GameController : MonoBehaviour {
 	void Update () 
 	{
 
-		//ShowQuadData ();
+		ShowQuadData ();
 
-		if (!pause) activeVList.UpdateList (Time.deltaTime);
+		if (!pause) activeVList.UpdateList (DELTA);
 		//activeVList.PrintList();
 
-		if (simulationOn) UpdateQuads (numCloseV, 1);
+		if (simulationOn) UpdateQuads (numCloseV, 2);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -94,7 +115,7 @@ public class GameController : MonoBehaviour {
 			if (futureCollisionDetected) 
 			{
 				futureCollisionDetected = false;
-				suggestedSpeed += 0.1f;
+				suggestedSpeed += 0.2f;
 				//reset list
 				for (int i = 0; i < numCloseV; i++) 
 				{
@@ -138,7 +159,7 @@ public class GameController : MonoBehaviour {
 			if (!pause) 
 			{
 				vehicleIndex = Random.Range (0, 13);
-				lane = Random.Range (0, 8);
+				lane = 1;//Random.Range (0, 8);
 
 				givenSpeed = 40f;
 
@@ -174,9 +195,13 @@ public class GameController : MonoBehaviour {
 						break;
 					}
 					GameObject vehicle = (GameObject)Instantiate (vehicles [vehicleIndex], spawnPosition, spawnRotation);
+
+					Vector3 center = new Vector3 (centersOfRot [lane].x, YCoor [vehicleIndex], centersOfRot [lane].y);
 					int type = (vehicleIndex > 4 ? 4 : vehicleIndex);
 					vehicle.GetComponent<Vehicle> ().SetType (type);
 					vehicle.GetComponent<Vehicle> ().SetSpeed (givenSpeed);
+					vehicle.GetComponent<Vehicle> ().SetDirection (directionGiven);
+					vehicle.GetComponent<Vehicle> ().SetCenter (center);
 					suggestedSpeed = givenSpeed;
 					vehicle.GetComponent<Vehicle> ().SetSize (sizes [vehicleIndex]);
 					vehicle.tag = "Vehicle Checked";
@@ -184,12 +209,13 @@ public class GameController : MonoBehaviour {
 
 					nameBeingChecked = vehicleCounter;
 
-					int assignedTurn = 0;
-					if (lane % 2 == 0)
+					int assignedTurn = 1;//0;
+					/*
+					if (lane % 2 == 1)
 						assignedTurn = (leftTurningPercent > Random.Range (0f, 50f) ? 1 : 0);
 					else
 						assignedTurn = (rightTurningPercent > Random.Range (0f, 50f) ? -1 : 0);
-				
+				*/
 					vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 					vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 
@@ -197,10 +223,11 @@ public class GameController : MonoBehaviour {
 					countText.text = "Vehicle Count: " + vehicleCounter;
 					countShadow.text = "Vehicle Count: " + vehicleCounter;
 
-					Debug.Log ("before last index = " + activeVList.lastIndex);
+					//Debug.Log ("before last index = " + activeVList.lastIndex);
 					activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, type, diagonals [vehicleIndex]); 
-					Debug.Log ("after last index = " + activeVList.lastIndex);
+						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
+						type, diagonals [vehicleIndex]); 
+					//Debug.Log ("after last index = " + activeVList.lastIndex);
 					//begin prepping your shadow runners list
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], activeVList.lastIndex, directionGiven, type, true, diagonals [vehicleIndex]);
@@ -555,10 +582,10 @@ public class GameController : MonoBehaviour {
 
 	private void UpdateQuads(int numVehiclesClose, int multiplier)
 	{
-		float delta = Time.deltaTime;
+		
 		for (int i=0;i<numVehiclesClose;i++)
 		{
-			futureVehicles[i].UpdateAndAdvance(delta, multiplier);
+			futureVehicles[i].UpdateAndAdvance(DELTA, multiplier);
 		}
 	}
 
