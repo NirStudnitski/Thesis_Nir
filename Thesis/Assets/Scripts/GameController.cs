@@ -26,7 +26,7 @@ public class GameController : MonoBehaviour {
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
 
-	public const float DELTA = 0.0160000f, rR = 33f, rL = 33f; // for unity's delta time inaccuracies
+	public const float DELTA = 0.0160000f, rR = 39f-18.3f, rL = 33f+6.5f; // for unity's delta time inaccuracies
 	private static float TWO_PI = 6.283185307f;
 	public GameObject[] vehicles;
 	public GameObject quad;
@@ -40,10 +40,10 @@ public class GameController : MonoBehaviour {
 
 	static public Vector2[] centersOfRot = 
 	{
-		new Vector2 (-39f, -6.5f+rL), new Vector2 (-33f, -18f-rR),
-		new Vector2 (-6.5f+rL , 39f), new Vector2 (-18f-rR, 33f),
-		new Vector2 (39f, 6.5f-rL),   new Vector2 (33f, 18.5f+rR),
-		new Vector2 (6.5f-rL ,-39f), new Vector2 (18.3f+rR, -33f),
+		new Vector2 (-33f, -6.5f+rL), new Vector2 (-39f, -18f-rR),
+		new Vector2 (-6.5f+rL , 33f), new Vector2 (-18f-rR, 39f),
+		new Vector2 (33f, 6.5f-rL),   new Vector2 (39f, 18.5f+rR),
+		new Vector2 (6.5f-rL ,-33f), new Vector2 (18.3f+rR, -39f),
 	};
 
 	static public Vector3[] rotators = {
@@ -159,7 +159,7 @@ public class GameController : MonoBehaviour {
 			if (!pause) 
 			{
 				vehicleIndex = Random.Range (0, 13);
-				lane = 1;//Random.Range (0, 8);
+				lane = Random.Range (0, 8);
 
 				givenSpeed = 40f;
 
@@ -209,13 +209,13 @@ public class GameController : MonoBehaviour {
 
 					nameBeingChecked = vehicleCounter;
 
-					int assignedTurn = 1;//0;
-					/*
+					int assignedTurn = 0;
+
 					if (lane % 2 == 1)
-						assignedTurn = (leftTurningPercent > Random.Range (0f, 50f) ? 1 : 0);
+						assignedTurn = (rightTurningPercent > Random.Range (0f, 50f) ? 1 : 0);
 					else
-						assignedTurn = (rightTurningPercent > Random.Range (0f, 50f) ? -1 : 0);
-				*/
+						assignedTurn = (leftTurningPercent > Random.Range (0f, 50f) ? -1 : 0);
+				
 					vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 					vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 
