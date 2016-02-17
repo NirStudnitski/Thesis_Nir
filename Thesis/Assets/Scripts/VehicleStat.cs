@@ -3,18 +3,18 @@ using System.Collections;
 
 public class VehicleStat  {
 
-	const float TWO_PI = 6.2831853f;
-	public Vector2 currentLocation, direction;
-	public bool turnInitiate = false, isQuad = false;
+	const float TWO_PI = 6.2831853f, HALF_PI = 1.570796326f, TO_DEG = 360f/TWO_PI;
+	public Vector2 currentLocation, direction, center;
+	public bool turnInitiate = false, isQuad = false, turnDone = false;
 	public int turnPlan, lane, name, index, turnCounter = 0, type;
-	public float speed,  halfLength, halfWidth, halfDiag;
+	public float speed,  halfLength, halfWidth, halfDiag, extra, theta;
 
 
 
 	public VehicleStat (Vector2 locIn, int turnPlanIn, int laneIn, 
 						int nameIn, float speedIn, 
 		float halfLengthIn, float halfWidthIn, int indexIn, Vector2 dirIn, 
-		int typeIn, bool isQuadIn, float halfDiagIn)
+		int typeIn, bool isQuadIn, float halfDiagIn, Vector2 centerIn)
 	{
 		currentLocation = locIn;
 		turnPlan= turnPlanIn;
@@ -28,6 +28,7 @@ public class VehicleStat  {
 		type = typeIn;
 		isQuad = isQuadIn;
 		halfDiag = halfDiagIn;
+		center = centerIn;
 
 
 	}
@@ -42,31 +43,307 @@ public class VehicleStat  {
 	{
 		
 
-		currentLocation += direction* speed*deltaTime;
-		if (turnPlan == 1) 
+		if (turnPlan ==0) currentLocation += direction * speed * GameController.DELTA;
+		else if (turnPlan == 1) // turn right
 		{
-			if (!turnInitiate ) if (-33f <currentLocation.x && currentLocation.x < 33f
-				&& -33f < currentLocation.y && currentLocation.y < 33f)
-				turnInitiate = true;
-			if (turnInitiate && turnCounter <= 90) 
+			switch (lane)
 			{
-				if (turnCounter>0) direction = RotateCCW(direction, TWO_PI / 360f);
-			
-				turnCounter++;
-			}
-		} 
-		else if (turnPlan == -1) 
-		{
-			if (!turnInitiate) if (-39f < currentLocation.x && currentLocation.x < 39f
-				&& -39f < currentLocation.y && currentLocation.y < 39f)
-				turnInitiate = true;
-			if (turnInitiate && turnCounter <= 90) 
-			{
-				if (turnCounter>0) direction = RotateCW(direction, TWO_PI / 180f);
+				case (1):
+					if (!turnInitiate)
+					if (currentLocation.x > -39f)
+					{
+						extra = currentLocation.x + 39f;
+						turnInitiate = true;
+					}
 
-				turnCounter+=2;
-			}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (1, 0), theta);
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+							+ extraDist * direction;
+
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (3):
+					if (!turnInitiate)
+					if (currentLocation.y < 39f)
+					{
+						extra = 39f - currentLocation.y;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (5):
+					if (!turnInitiate)
+					if (currentLocation.x < 39f)
+					{
+						extra = 39f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (7):
+					if (!turnInitiate)
+					if (currentLocation.y > -39f)
+					{
+						extra = currentLocation.y + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+			} 
+			else if (turnPlan == -1) 
+			{
+				switch (lane)
+				{
+				case (0):
+					if (!turnInitiate)
+					if (currentLocation.x > -33f)
+					{
+						extra = currentLocation.x + 33f;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (2):
+					if (!turnInitiate)
+					if (currentLocation.y < 33f)
+					{
+						extra = 33f - currentLocation.y;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (4):
+					if (!turnInitiate)
+					if (currentLocation.x < 33f)
+					{
+						extra = 33f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (6):
+					if (!turnInitiate)
+					if (currentLocation.y > -33f)
+					{
+						extra = currentLocation.y + 33f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+
+
 		}
+
+
 	}
 
 	//for fast updates of quads
@@ -76,31 +353,306 @@ public class VehicleStat  {
 		for (int i=0;i<multiplier && !GameController.futureCollisionDetected;i++)
 		{
 			
-			currentLocation += direction* speed*deltaTime*multiplier;
 
-			if (turnPlan == 1) 
+			if (turnPlan ==0) currentLocation += direction * speed * GameController.DELTA;
+			else if (turnPlan == 1) // turn right
 			{
-				if (!turnInitiate ) if (-33f <currentLocation.x && currentLocation.x < 33f
-					&& -33f < currentLocation.y && currentLocation.y < 33f)
-					turnInitiate = true;
-				if (turnInitiate && turnCounter <= 90) 
+				switch (lane)
 				{
-					if (turnCounter>0) direction = RotateCCW(direction, TWO_PI / (360f/multiplier));
+				case (1):
+					if (!turnInitiate)
+					if (currentLocation.x > -39f)
+					{
+						extra = currentLocation.x + 39f;
+						turnInitiate = true;
+					}
 
-					turnCounter+=multiplier;
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (3):
+					if (!turnInitiate)
+					if (currentLocation.y < 39f)
+					{
+						extra = 39f - currentLocation.y;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (5):
+					if (!turnInitiate)
+					if (currentLocation.x < 39f)
+					{
+						extra = 39f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (7):
+					if (!turnInitiate)
+					if (currentLocation.y > -39f)
+					{
+						extra = currentLocation.y + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rR;
+						direction = RotateCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rR;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
 				}
 			} 
 			else if (turnPlan == -1) 
 			{
-				if (!turnInitiate) if (-39f < currentLocation.x && currentLocation.x < 39f
-					&& -39f < currentLocation.y && currentLocation.y < 39f)
-					turnInitiate = true;
-				if (turnInitiate && turnCounter <= 90) 
+				switch (lane)
 				{
-					if (turnCounter>0) direction = RotateCW(direction, TWO_PI / (180f/multiplier));
+				case (0):
+					if (!turnInitiate)
+					if (currentLocation.x > -33f)
+					{
+						extra = currentLocation.x + 33f;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
 
-					turnCounter+=(2*multiplier);
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (2):
+					if (!turnInitiate)
+					if (currentLocation.y < 33f)
+					{
+						extra = 33f - currentLocation.y;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (4):
+					if (!turnInitiate)
+					if (currentLocation.x < 33f)
+					{
+						extra = 33f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (6):
+					if (!turnInitiate)
+					if (currentLocation.y > -33f)
+					{
+						extra = currentLocation.y + 33f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * GameController.DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * GameController.DELTA * turnCounter;
+						theta = arcLength / GameController.rL;
+						direction = RotateCCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*GameController.rL;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCCW (GameController.rotators2 [lane], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
 				}
+
+
 			}
 
 			if (!GameController.doneWithCheck)
@@ -161,7 +713,6 @@ public class VehicleStat  {
 		return new Vector2 (vIn.x * Mathf.Cos (angle) - vIn.y * Mathf.Sin (angle),
 			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
 	}
-
 
 
 }

@@ -27,7 +27,8 @@ public class VehicleList : MonoBehaviour{
 		float halfLengthIn, float halfWidthIn, Vector2 dirIn, int typeIn, float diagIn)
 	{
 		activeVehicles [++lastIndex] = new VehicleStat (spawnIn, turnPlanIn, laneIn, 
-								nameIn, speedIn,  halfLengthIn, halfWidthIn, lastIndex, dirIn, typeIn, false, diagIn);
+								nameIn, speedIn,  halfLengthIn, halfWidthIn, 
+			lastIndex, dirIn, typeIn, false, diagIn, GameController.centersOfRot[laneIn]);
 		
 		
 	}	

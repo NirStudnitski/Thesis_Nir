@@ -53,6 +53,13 @@ public class GameController : MonoBehaviour {
 		new Vector3 (rL, 0, 0), new Vector3 (-rR,0,0)
 	};
 
+	static public Vector2[] rotators2 = {
+		new Vector2 (0,  -rL), new Vector2 (0,  rR),
+		new Vector2 (-rL,  0), new Vector2 (rR,0),
+		new Vector2 (0,  rL), new Vector2 (0,  -rR),
+		new Vector2 (rL,  0), new Vector2 (-rR,0)
+	};
+
 
 
 	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
@@ -102,12 +109,12 @@ public class GameController : MonoBehaviour {
 	void Update () 
 	{
 
-		ShowQuadData ();
+		//ShowQuadData ();
 
 		if (!pause) activeVList.UpdateList (DELTA);
 		//activeVList.PrintList();
 
-		if (simulationOn) UpdateQuads (numCloseV, 2);
+		if (simulationOn) UpdateQuads (numCloseV, 20);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -119,9 +126,6 @@ public class GameController : MonoBehaviour {
 				//reset list
 				for (int i = 0; i < numCloseV; i++) 
 				{
-					ShowQuadData ();
-					activeVList.PrintList ();
-					Debug.Log ("index of "+ i + " = "+ futureVehicles [i].index);
 					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
 					futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
 					futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
@@ -230,7 +234,9 @@ public class GameController : MonoBehaviour {
 					//Debug.Log ("after last index = " + activeVList.lastIndex);
 					//begin prepping your shadow runners list
 					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], activeVList.lastIndex, directionGiven, type, true, diagonals [vehicleIndex]);
+						vehicleCounter, givenSpeed, sizes [vehicleIndex], 
+						widths [vehicleIndex], activeVList.lastIndex, directionGiven, 
+						type, true, diagonals [vehicleIndex], centersOfRot[lane]);
 					doneWithCheck = false;
 					futureCollisionDetected = false;
 					laneAvailable[lane] = false;
@@ -535,7 +541,8 @@ public class GameController : MonoBehaviour {
 							activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
 							activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes [activeVList.GetType (i)], 
 							widths [activeVList.GetType (i)], activeVList.GetIndex (i),
-							activeVList.GetDirection (i), activeVList.GetType (i), true, diagonals [activeVList.GetType (i)]);
+							activeVList.GetDirection (i), activeVList.GetType (i), true, 
+							diagonals [activeVList.GetType (i)], centersOfRot[activeVList.GetLane (i)]);
 						numCloseV++;
 					}
 				}
