@@ -159,4 +159,9 @@ public class VehicleList : MonoBehaviour{
 	{
 		return activeVehicles [i].turnInitiate;
 	}
+
+	public bool GetTurnDone (int i)
+	{
+		return activeVehicles [i].turnDone;
+	}
 }

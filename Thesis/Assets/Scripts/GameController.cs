@@ -114,7 +114,7 @@ public class GameController : MonoBehaviour {
 		if (!pause) activeVList.UpdateList (DELTA);
 		//activeVList.PrintList();
 
-		if (simulationOn) UpdateQuads (numCloseV, 20);
+		if (simulationOn) UpdateQuads (numCloseV, 1);
 		if (simulationOn && pause && doneWithCheck) 
 		{
 			doneWithCheck = false;
@@ -122,7 +122,7 @@ public class GameController : MonoBehaviour {
 			if (futureCollisionDetected) 
 			{
 				futureCollisionDetected = false;
-				suggestedSpeed += 0.2f;
+				suggestedSpeed += 0.5f;
 				//reset list
 				for (int i = 0; i < numCloseV; i++) 
 				{
@@ -130,6 +130,7 @@ public class GameController : MonoBehaviour {
 					futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
 					futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
 					futureVehicles [i].turnCounter = activeVList.GetTurnCounter (futureVehicles [i].index);
+					futureVehicles [i].turnDone = activeVList.GetTurnDone (futureVehicles [i].index);
 				}
 				futureVehicles [0].speed = suggestedSpeed;
 
