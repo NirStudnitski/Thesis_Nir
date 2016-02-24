@@ -11,14 +11,16 @@ public class GameController : MonoBehaviour {
 
 	private float waitTime;
 	public static VehicleList activeVList; 
-	float suggestedSpeed;
+	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
 	public int vehicleCounter;
 	public static int nameBeingChecked;
-	public static int numCloseV=0;
+	public static string timeText;
+	public static int numCloseV=0, simulationSpeed = 5, frameCounter=0;
 	public Text rateText, rateShadow;
 	public Text countText, countShadow;
 	public Text leftText, leftShadow;
 	public Text rightText, rightShadow;
+	public Text time, timeShadow;
 	private float leftTurningPercent, rightTurningPercent;
 	public Button collisionButton, simulationButton;
 	static public bool collisionOn, simulationOn, pause, futureCollisionDetected = false, doneWithCheck = false;
@@ -64,11 +66,11 @@ public class GameController : MonoBehaviour {
 
 	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
 	//half each vehicle's length
-	private float[] sizes = { 8.2f, 9.2f, 15.2f, 10.2f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f,6.8f };
+	private float[] sizes = { 8.6f, 10.5f, 15.95f, 10.7f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f };
 	//half each vehicle's width
-	private float[] widths = { 3.6f, 4.1f, 4.1f, 3.1f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f,2.8f };
+	private float[] widths = { 3.8f, 4.5f, 4.3f, 3.25f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f };
 	//half each vehicle's diagonal
-	private float[] diagonals = { 8.955f, 10.07f, 15.75f, 10.65f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f,7.35f };
+	private float[] diagonals = { 9.4f, 11.5f, 16.5f, 11.2f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f };
 
 	//---------------------------------------------------------------
 
@@ -111,20 +113,88 @@ public class GameController : MonoBehaviour {
 
 		//ShowQuadData ();
 
-		if (!pause) activeVList.UpdateList (DELTA);
-		//activeVList.PrintList();
-
-		if (simulationOn) UpdateQuads (numCloseV, 1);
-		if (simulationOn && pause && doneWithCheck) 
+		if (!pause)
 		{
-			doneWithCheck = false;
+			activeVList.UpdateList (DELTA);
+			elapsedTime += DELTA;
+			frameCounter++;
+			if (frameCounter % 60 == 0)
+			{
+				timeText = "Elapsed Time: " + elapsedTime.ToString ("F2") + " s";
+				time.text = timeText;
+				timeShadow.text = timeText;
+			}
+		}
 
-			if (futureCollisionDetected) 
+
+		if (simulationOn)
+		{	
+			for (int i =0;i<simulationSpeed && pause && 
+							!doneWithCheck && !futureCollisionDetected;i++) 
+				UpdateQuads (numCloseV, 1);
+			if (pause && doneWithCheck)
+			{
+				doneWithCheck = false;
+
+				if (futureCollisionDetected)
+				{
+					futureCollisionDetected = false;
+
+					// the attempted speed is slower and faster alternatingly, 
+					if (deltaSpeed>=0) deltaSpeed+=1f;
+					suggestedSpeed += deltaSpeed;
+					deltaSpeed *= -1;
+
+					//reset list
+					for (int i = 0; i < numCloseV; i++)
+					{
+						futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
+						futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
+						futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
+						futureVehicles [i].turnCounter = activeVList.GetTurnCounter (futureVehicles [i].index);
+						futureVehicles [i].turnDone = activeVList.GetTurnDone (futureVehicles [i].index);
+					}
+					futureVehicles [0].speed = suggestedSpeed;
+
+				} else
+				{
+					//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
+					GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+					temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+					activeVList.SetSpeed (activeVList.lastIndex, suggestedSpeed);
+					temp.tag = "Untagged";
+					pause = false;
+					deltaSpeed = 0;
+				}
+
+
+			}
+		}
+
+			
+	}
+
+	IEnumerator algorithmV1()
+	{
+		while (Mathf.Abs(suggestedSpeed) < 70f)
+		{
+			// there is a bug here, that if this does not find a solution, it never unpauses. maybe a good thing. 
+
+			futureCollisionDetected = false;
+			doneWithCheck = false;
+			while(!futureCollisionDetected && !doneWithCheck) UpdateQuads (numCloseV, 1);
+
+			if (futureCollisionDetected)
 			{
 				futureCollisionDetected = false;
-				suggestedSpeed += 0.5f;
+				doneWithCheck = false;
+
+				// the attempted speed is slower and faster alternatingly, 
+				if (deltaSpeed>=0) deltaSpeed+=1f;
+				suggestedSpeed += deltaSpeed;
+				deltaSpeed *= -1;
 				//reset list
-				for (int i = 0; i < numCloseV; i++) 
+				for (int i = 0; i < numCloseV; i++)
 				{
 					futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
 					futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
@@ -134,23 +204,23 @@ public class GameController : MonoBehaviour {
 				}
 				futureVehicles [0].speed = suggestedSpeed;
 
-			} 
-			else 
+			}
+			else
 			{
-				//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
 				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 				activeVList.SetSpeed (activeVList.lastIndex, suggestedSpeed);
 				temp.tag = "Untagged";
 				pause = false;
+				deltaSpeed = 0;
+				break;
 			}
 
-
 		}
-
-			
+		if (Mathf.Abs (suggestedSpeed) >= 70f)
+			Debug.Log ("No solution found.");
+		yield return new WaitForSeconds (0);
 	}
-
 	IEnumerator SpawnCars ()
 	{
 		
@@ -508,81 +578,53 @@ public class GameController : MonoBehaviour {
 
 	private void CheckFutureCollision (int lane)
 	{
-		if (simulationOn)
+
+		pause = true;
+
+		numCloseV = 1; 
+		int index = 1;
+
+		//generate a list of vehicles
+		for (int i = 0; i < activeVList.lastIndex ; i++)
 		{
-			pause = true;
+			int tempLane = activeVList.GetLane (i);
+			bool closeLanes = false;
 
+			if ((lane == tempLane + 1 && lane % 2 == 1) || (lane == tempLane - 1 && lane % 2 == 0))
+				closeLanes = true;
 
-			numCloseV = 1; 
-			int index = 1;
-
-			//generate a list of vehicles
-			for (int i = 0; i < activeVList.lastIndex ; i++)
+			if (!closeLanes)
 			{
-				int tempLane = activeVList.GetLane (i);
-				bool closeLanes = false;
-				if (lane == tempLane)
-					closeLanes = true;
-				else if ((lane == tempLane + 1 && lane % 2 == 1) || (lane == tempLane - 1 && lane % 2 == 0))
-					closeLanes = true;
-
-				if (!closeLanes)
+				//check candidates for collision
+				Vector2 tempLoc = activeVList.GetCurrentPosition (i);
+				bool probableProximity = false;
+				//Debug.Log ("x = " + tempLoc.x + ", y = " + tempLoc.y);
+				if (Mathf.Abs (tempLoc.x) > 200f || Mathf.Abs (tempLoc.y) > 200f)
+					probableProximity = true;
+				if (probableProximity)
 				{
-					//check candidates for collision
-					Vector2 tempLoc = activeVList.GetCurrentPosition (i);
-					bool probableProximity = false;
-					//Debug.Log ("x = " + tempLoc.x + ", y = " + tempLoc.y);
-					if (Mathf.Abs (tempLoc.x) > 220f || Mathf.Abs (tempLoc.y) > 220f)
-						probableProximity = true;
-					if (probableProximity)
-					{
 
-						//Debug.Log("for future vehicle "+ (index) + " the index given is " + activeVList.GetIndex (i));
-						futureVehicles [index++] = new VehicleStat (
-							activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
-							activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes [activeVList.GetType (i)], 
-							widths [activeVList.GetType (i)], activeVList.GetIndex (i),
-							activeVList.GetDirection (i), activeVList.GetType (i), true, 
-							diagonals [activeVList.GetType (i)], centersOfRot[activeVList.GetLane (i)]);
-						numCloseV++;
-					}
+					//Debug.Log("for future vehicle "+ (index) + " the index given is " + activeVList.GetIndex (i));
+					futureVehicles [index++] = new VehicleStat (
+						activeVList.GetCurrentPosition (i), activeVList.GetTurnPlan (i), 
+						activeVList.GetLane (i), activeVList.GetName (i), activeVList.GetSpeed (i), sizes [activeVList.GetType (i)], 
+						widths [activeVList.GetType (i)], activeVList.GetIndex (i),
+						activeVList.GetDirection (i), activeVList.GetType (i), true, 
+						diagonals [activeVList.GetType (i)], centersOfRot[activeVList.GetLane (i)]);
+					numCloseV++;
 				}
 			}
-		} 
-		else pause = false;
-		/*
-		if (!simulationOn) 
+		}
+		if (numCloseV == 1)
 		{
-			
-
-			UpdateQuads (numCloseV, 200);
-
-			while (futureCollisionDetected) 
-			{
-				
-				futureCollisionDetected = false;
-				suggestedSpeed += 0.1f;
-				//reset list
-				for (int i = 0;i<numCloseV;i++)
-				{
-					futureVehicles[i].currentLocation = activeVList.GetCurrentPosition (i);
-					futureVehicles[i].direction = activeVList.GetDirection (i);
-					futureVehicles [i].turnInitiate = false;
-					futureVehicles [i].turnCounter = 0;
-				}
-				futureVehicles[0].speed = suggestedSpeed;
-
-				UpdateQuads (numCloseV, 200);
-
-			} 
-
-			GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
-			temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
-			temp.tag = "Untagged";
-			futureCollisionDetected = false; 
+			futureCollisionDetected = false;
+			doneWithCheck = true;
 			pause = false;
+			GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+			temp.tag = "Untagged";
+		}
+		else if (!simulationOn) StartCoroutine(algorithmV1());
 
-		}*/
 
 
 	}

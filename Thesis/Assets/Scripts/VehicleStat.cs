@@ -350,7 +350,7 @@ public class VehicleStat  {
 	public void UpdateAndAdvance (float deltaTime, int multiplier)
 	{
 		
-		for (int i=0;i<multiplier && !GameController.futureCollisionDetected;i++)
+		for (int i=0;i<multiplier ;i++)
 		{
 			
 
@@ -668,17 +668,18 @@ public class VehicleStat  {
 				if (!GameController.futureCollisionDetected)
 				{
 					bla += "future collision = " + GameController.futureCollisionDetected + "\n";
-					for (int j = 0; j < GameController.numCloseV; j++)
+					for (int j = 0; j < GameController.numCloseV && !GameController.futureCollisionDetected; j++)
 					{
 					
 						if (name != GameController.futureVehicles [j].name)
 						{
+							/*
 							bla +=name +"!="+ GameController.futureVehicles [j].name + "\n";
 							bla += "current Location = (" + currentLocation.x + ", " + currentLocation.y + ")\n";
 							bla += "B current Location = (" + GameController.futureVehicles [j].currentLocation.x + ", " + GameController.futureVehicles [j].currentLocation.y + ")\n";
 							bla += "diag = " + halfDiag+ ")\n";
 							bla += "B diag = " + GameController.futureVehicles [j].halfDiag+ ")\n";
-
+							*/
 							if (GameController.QuickCollisionDetection (currentLocation, GameController.futureVehicles [j].currentLocation,
 									    halfDiag, GameController.futureVehicles [j].halfDiag))
 							{
