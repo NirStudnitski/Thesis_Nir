@@ -6,7 +6,8 @@ public class ExitBox : MonoBehaviour {
 
 	void OnTriggerEnter(Collider other){
 
-		GameController.activeVList.Remove (Int32.Parse (other.name));
+		if (GameController.currentMethod == (int) GameController.methods.v1)
+			GameController.activeVList.Remove (Int32.Parse (other.name));
 		Destroy (other.gameObject);
 
 

@@ -26,7 +26,7 @@ public class Vehicle : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
 
 		if (initiate)
 		{
@@ -413,6 +413,11 @@ public class Vehicle : MonoBehaviour {
 	public void SetLane(int x)
 	{
 		lane = x;
+	}
+
+	public int GetLane()
+	{
+		return lane;
 	}
 
 	public void SetType(int x)

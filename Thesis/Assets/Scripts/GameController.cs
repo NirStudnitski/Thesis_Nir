@@ -8,10 +8,11 @@ using System.Collections.Generic;
 
 public class GameController : MonoBehaviour {
 
-
+	public static int currentMethod = 1;
+	public enum methods { v1, v2};
 	private float waitTime;
 	public static VehicleList activeVList; 
-	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
+	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0, everyonesSpeed = 40;
 	public int vehicleCounter;
 	public static int nameBeingChecked;
 	public static string timeText;
@@ -24,6 +25,15 @@ public class GameController : MonoBehaviour {
 	private float leftTurningPercent, rightTurningPercent;
 	public Button collisionButton, simulationButton;
 	static public bool collisionOn, simulationOn, pause, futureCollisionDetected = false, doneWithCheck = false;
+
+	//for V2
+	public static float[,] dataCenter, dataCenter2; //0= loc.x, 1= loc.y, 2= dir.x, 3= dir.y, 4= halflength, 5= halfwidth, 6= halfdiagonal
+	public static int nowFrame = 0, nowFrame2 =0; // the index of the current time frame
+	public static int[] lastIndexes, lastIndexes2;
+	public static int rowsInDataCenter = 150, rowsInD2 = 500;
+	public static bool inStepSim = true; //to toggle is simulation is of future or now
+
+
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
@@ -65,6 +75,14 @@ public class GameController : MonoBehaviour {
 
 
 	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
+
+	// bunch of data for max speed per lane
+	static public int[] frameAtInstantiation = { 0, 0, 0, 0, 0, 0, 0,0 };
+	static public float[] halfLengthAtInst = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	static public float[] lastVehicleSpeed = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	static float currentMaxSpeed = 100f;
+	static bool notExceedMax = true;
+
 	//half each vehicle's length
 	private float[] sizes = { 8.6f, 10.5f, 15.95f, 10.7f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f };
 	//half each vehicle's width
@@ -78,7 +96,7 @@ public class GameController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-			
+
 		vehicleCounter = 0;
 
 		pause = false;
@@ -89,7 +107,19 @@ public class GameController : MonoBehaviour {
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
-		activeVList = new VehicleList();
+		if (currentMethod == (int) methods.v1) activeVList = new VehicleList();
+
+		if (currentMethod == (int)methods.v2)
+		{
+			dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX/2];
+			lastIndexes = new int[rowsInDataCenter];
+			if (inStepSim)
+			{
+				dataCenter2 = new float[rowsInD2, ACTIVE_V_MAX / 2];
+				lastIndexes2 = new int[rowsInD2];
+			}
+
+		}
 
 
 		for (int i = 0; i < ACTIVE_V_MAX/10; i++) 
@@ -106,68 +136,113 @@ public class GameController : MonoBehaviour {
 
 
 	}
-	
+
 	// Update is called once per frame
-	void Update () 
+	void FixedUpdate () 
 	{
-
-		//ShowQuadData ();
-
-		if (!pause)
+		elapsedTime += DELTA;
+		frameCounter++;
+		if (frameCounter % 10 == 0)
 		{
-			activeVList.UpdateList (DELTA);
-			elapsedTime += DELTA;
-			frameCounter++;
-			if (frameCounter % 60 == 0)
+			timeText = "Elapsed Time: " + elapsedTime.ToString ("F2") + " s";
+			time.text = timeText;
+			timeShadow.text = timeText;
+		}
+
+		if (currentMethod == (int)methods.v2)
+		{
+			if (!pause)
 			{
-				timeText = "Elapsed Time: " + elapsedTime.ToString ("F2") + " s";
-				time.text = timeText;
-				timeShadow.text = timeText;
+				lastIndexes [nowFrame] = 0;
+				nowFrame++;
+				nowFrame %= rowsInDataCenter;
+				if (inStepSim)
+				{
+					lastIndexes2 [nowFrame2] = 0;
+					nowFrame2++;
+					nowFrame2 %= rowsInD2;
+				}
 			}
 		}
 
+		if (currentMethod == (int) methods.v1)
+		{
+			//ShowQuadData ();
 
-		if (simulationOn)
-		{	
-			for (int i =0;i<simulationSpeed && pause && 
-							!doneWithCheck && !futureCollisionDetected;i++) 
-				UpdateQuads (numCloseV, 1);
-			if (pause && doneWithCheck)
+			if (!pause)
 			{
-				doneWithCheck = false;
+				activeVList.UpdateList (DELTA);
 
-				if (futureCollisionDetected)
+			}
+
+
+			if (simulationOn)
+			{	
+				for (int i = 0; i < simulationSpeed && pause &&
+				!doneWithCheck && !futureCollisionDetected; i++)
+					UpdateQuads (numCloseV, 1);
+				if (pause && doneWithCheck)
 				{
-					futureCollisionDetected = false;
+					doneWithCheck = false;
 
-					// the attempted speed is slower and faster alternatingly, 
-					if (deltaSpeed>=0) deltaSpeed+=1f;
-					suggestedSpeed += deltaSpeed;
-					deltaSpeed *= -1;
-
-					//reset list
-					for (int i = 0; i < numCloseV; i++)
+					if (futureCollisionDetected)
 					{
-						futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
-						futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
-						futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
-						futureVehicles [i].turnCounter = activeVList.GetTurnCounter (futureVehicles [i].index);
-						futureVehicles [i].turnDone = activeVList.GetTurnDone (futureVehicles [i].index);
+						futureCollisionDetected = false;
+
+						// the attempted speed is slower and faster alternatingly, 
+						//but no more than currentMaxSpeed to avoid hitting the car in front
+						if (notExceedMax)
+						if (suggestedSpeed > currentMaxSpeed)
+							notExceedMax = false;
+							
+
+						
+						if (notExceedMax)
+						{
+							if (deltaSpeed >= 0)
+								deltaSpeed += 1f;
+							suggestedSpeed = everyonesSpeed + deltaSpeed;
+							deltaSpeed *= -1;
+						} else
+						{
+							suggestedSpeed = everyonesSpeed + deltaSpeed;
+							deltaSpeed -= 1f;
+						}
+
+						//reset list
+						for (int i = 0; i < numCloseV; i++)
+						{
+							futureVehicles [i].currentLocation = activeVList.GetCurrentPosition (futureVehicles [i].index);
+							futureVehicles [i].direction = activeVList.GetDirection (futureVehicles [i].index);
+							futureVehicles [i].turnInitiate = activeVList.GetTurnInitiate (futureVehicles [i].index);
+							futureVehicles [i].turnCounter = activeVList.GetTurnCounter (futureVehicles [i].index);
+							futureVehicles [i].turnDone = activeVList.GetTurnDone (futureVehicles [i].index);
+						}
+						futureVehicles [0].speed = suggestedSpeed;
+
+					} else
+					{
+						//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
+						GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+						temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+						int laneNow = temp.GetComponent<Vehicle> ().GetLane ();
+						activeVList.SetSpeed (activeVList.lastIndex, suggestedSpeed);
+						temp.tag = "Untagged";
+
+						frameAtInstantiation [laneNow] = frameCounter;
+						halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
+						lastVehicleSpeed [laneNow] = suggestedSpeed;
+						notExceedMax = true;
+						deltaSpeed = 0;
+
+
+
+						pause = false;
+
 					}
-					futureVehicles [0].speed = suggestedSpeed;
 
-				} else
-				{
-					//Debug.Log ("here at completion, suggested speed= " + suggestedSpeed);
-					GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
-					temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
-					activeVList.SetSpeed (activeVList.lastIndex, suggestedSpeed);
-					temp.tag = "Untagged";
-					pause = false;
-					deltaSpeed = 0;
+
 				}
-
-
 			}
 		}
 
@@ -221,11 +296,12 @@ public class GameController : MonoBehaviour {
 			Debug.Log ("No solution found.");
 		yield return new WaitForSeconds (0);
 	}
+
 	IEnumerator SpawnCars ()
 	{
 		
 		int lane; 
-		float givenSpeed;
+
 		int vehicleIndex = 0;
 		bool spawn = false;
 		while (true)
@@ -236,7 +312,7 @@ public class GameController : MonoBehaviour {
 				vehicleIndex = Random.Range (0, 13);
 				lane = Random.Range (0, 8);
 
-				givenSpeed = 40f;
+
 
 				for (int i = 0; i < 8; i++) {
 
@@ -274,10 +350,10 @@ public class GameController : MonoBehaviour {
 					Vector3 center = new Vector3 (centersOfRot [lane].x, YCoor [vehicleIndex], centersOfRot [lane].y);
 					int type = (vehicleIndex > 4 ? 4 : vehicleIndex);
 					vehicle.GetComponent<Vehicle> ().SetType (type);
-					vehicle.GetComponent<Vehicle> ().SetSpeed (givenSpeed);
+					vehicle.GetComponent<Vehicle> ().SetSpeed (everyonesSpeed);
 					vehicle.GetComponent<Vehicle> ().SetDirection (directionGiven);
 					vehicle.GetComponent<Vehicle> ().SetCenter (center);
-					suggestedSpeed = givenSpeed;
+					suggestedSpeed = everyonesSpeed;
 					vehicle.GetComponent<Vehicle> ().SetSize (sizes [vehicleIndex]);
 					vehicle.tag = "Vehicle Checked";
 					vehicle.name = "" + ++vehicleCounter;
@@ -298,22 +374,36 @@ public class GameController : MonoBehaviour {
 					countText.text = "Vehicle Count: " + vehicleCounter;
 					countShadow.text = "Vehicle Count: " + vehicleCounter;
 
-					//Debug.Log ("before last index = " + activeVList.lastIndex);
-					activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						vehicleCounter, givenSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
-						type, diagonals [vehicleIndex]); 
-					//Debug.Log ("after last index = " + activeVList.lastIndex);
-					//begin prepping your shadow runners list
-					futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						vehicleCounter, givenSpeed, sizes [vehicleIndex], 
-						widths [vehicleIndex], activeVList.lastIndex, directionGiven, 
-						type, true, diagonals [vehicleIndex], centersOfRot[lane]);
 					doneWithCheck = false;
 					futureCollisionDetected = false;
-					laneAvailable[lane] = false;
+					laneAvailable [lane] = false;
+
+					currentMaxSpeed = CalcMaxSpeed (lane, sizes [vehicleIndex]);
+
+					if (currentMethod == (int) methods.v1)
+					{
+					//Debug.Log ("before last index = " + activeVList.lastIndex);
+						activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
+							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
+							type, diagonals [vehicleIndex]); 
 
 
-					CheckFutureCollision (lane);
+						//begin prepping your shadow runners list
+						futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
+							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], 
+							widths [vehicleIndex], activeVList.lastIndex, directionGiven, 
+							type, true, diagonals [vehicleIndex], centersOfRot [lane]);
+						
+						CheckFutureCollisionV1 (lane);
+					}
+
+					if (currentMethod == (int)methods.v2)
+					{
+						pause = true;
+						StartCoroutine(CheckFutureCollisionV2 (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
+						sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
+							diagonals [vehicleIndex]));
+					}
 
 				}
 
@@ -576,7 +666,7 @@ public class GameController : MonoBehaviour {
 			vIn.x * Mathf.Sin (angle) + vIn.y * Mathf.Cos (angle));
 	}
 
-	private void CheckFutureCollision (int lane)
+	private void CheckFutureCollisionV1 (int lane)
 	{
 
 		pause = true;
@@ -629,6 +719,75 @@ public class GameController : MonoBehaviour {
 
 	}
 
+	IEnumerator CheckFutureCollisionV2 (Vector2 locIn, int turnPlanIn, int laneIn,   
+												float halfLengthIn, float halfWidthIn, 
+												Vector2 dirIn, float diagIn)
+	{
+
+		int deltaFrame, startFrame;
+		Vector2 newLoc;
+
+		while (suggestedSpeed < 70f && suggestedSpeed > 10f)
+		{
+			
+			futureCollisionDetected = false;
+
+			if (notExceedMax)
+			if (suggestedSpeed > currentMaxSpeed)
+			{
+				if (deltaSpeed > 0)
+					deltaSpeed *= -1;
+				notExceedMax = false;
+			}
+
+			if (notExceedMax)
+			{
+				if (deltaSpeed >= 0)
+					deltaSpeed += 1f;
+				suggestedSpeed = everyonesSpeed + deltaSpeed;
+				deltaSpeed *= -1;
+			} else
+			{
+				suggestedSpeed = everyonesSpeed + deltaSpeed;
+				deltaSpeed -= 1f;
+			}
+
+
+			deltaFrame = (int) Mathf.Floor(231f / (suggestedSpeed*DELTA));
+			startFrame = nowFrame + deltaFrame;
+			startFrame %= rowsInDataCenter;
+
+			newLoc = locIn + dirIn * suggestedSpeed * deltaFrame*DELTA;
+
+			futureCollisionDetected = AdvanceAndCheck (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
+
+			if (!futureCollisionDetected)
+			{
+				AdvanceAndUpdate (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
+
+				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
+				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+				int laneNow = temp.GetComponent<Vehicle> ().GetLane ();
+				temp.tag = "Untagged";
+
+				frameAtInstantiation [laneNow] = frameCounter;
+				halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
+				lastVehicleSpeed [laneNow] = suggestedSpeed;
+				break;
+
+			}
+		}
+		if (suggestedSpeed >= 70f || suggestedSpeed <= 10f)
+			Debug.Log ("No solution found.");
+
+		notExceedMax = true;
+		deltaSpeed = 0;
+		pause = false;
+		//PrintDataCenter2 ();
+		yield return new WaitForSeconds (0);
+
+	}
+
 
 	private void UpdateQuads(int numVehiclesClose, int multiplier)
 	{
@@ -664,5 +823,735 @@ public class GameController : MonoBehaviour {
 		Debug.Log (rtn);
 	}
 
+	public float CalcMaxSpeed(int lane, float myHalfLength)
+	{
+		float rtn = 0;
+		if (lastVehicleSpeed [lane] == 0)
+			rtn = 1000f;
+		else
+		{
+			int deltaFrame = frameCounter - frameAtInstantiation [lane];
+			float distanceRemaining = 231f - ((float)deltaFrame) * lastVehicleSpeed [lane] + halfLengthAtInst [lane];
+			if (distanceRemaining < 0)
+				rtn = 1000f;
+			else
+			{
+				float timeRemaining = distanceRemaining / lastVehicleSpeed [lane];
+				rtn = (231f - myHalfLength) / timeRemaining;
+			}
+		}
+		return rtn;
+	}
+
+	private bool AdvanceAndCheck(float speed, int startFrame, Vector2 newLoc,int laneIn, int turnPlan, Vector2 dirIn, 
+									float halfLengthIn, float halfWidthIn, float diagIn)
+	{
+		Vector2 currentLocation = newLoc, direction = dirIn, center = centersOfRot[laneIn];
+		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
+		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
+		int turnCounter = 0;
+
+		for (int i=0;i<140 && !futureCollisionDetected ;i++)
+		{
+			
+			if (turnPlan ==0) currentLocation += direction * speed * DELTA;
+			else if (turnPlan == 1) // turn right
+			{
+				switch (laneIn)
+				{
+				case (1):
+					if (!turnInitiate)
+					if (currentLocation.x > -39f)
+					{
+						extra = currentLocation.x + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (3):
+					if (!turnInitiate)
+					if (currentLocation.y < 39f)
+					{
+						extra = 39f - currentLocation.y;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (5):
+					if (!turnInitiate)
+					if (currentLocation.x < 39f)
+					{
+						extra = 39f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (7):
+					if (!turnInitiate)
+					if (currentLocation.y > -39f)
+					{
+						extra = currentLocation.y + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+			} 
+			else if (turnPlan == -1) 
+			{
+				switch (laneIn)
+				{
+				case (0):
+					if (!turnInitiate)
+					if (currentLocation.x > -33f)
+					{
+						extra = currentLocation.x + 33f;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (2):
+					if (!turnInitiate)
+					if (currentLocation.y < 33f)
+					{
+						extra = 33f - currentLocation.y;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (4):
+					if (!turnInitiate)
+					if (currentLocation.x < 33f)
+					{
+						extra = 33f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (6):
+					if (!turnInitiate)
+					if (currentLocation.y > -33f)
+					{
+						extra = currentLocation.y + 33f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+
+			}
+			//now check collision
+			for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
+			{
+				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
+					diagIn, dataCenter[startFrame,7*j+6]))
+				{
+								
+					if (FullCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]), 
+										halfWidthIn, dataCenter[startFrame,7*j+5],
+										halfLengthIn, dataCenter[startFrame,7*j+4],
+										direction, new Vector2(dataCenter[startFrame,7*j+2],
+										dataCenter[startFrame,7*j+3])))
+					{
+						Debug.Log ("Collision");
+						futureCollisionDetected = true;
+					}
+						
+					
+				}
+			} 
+		}
+
+		return futureCollisionDetected;
+
+	}
+
+	private void AdvanceAndUpdate(float speed, int startFrame, Vector2 newLoc,int laneIn, int turnPlan, Vector2 dirIn, 
+		float halfLengthIn, float halfWidthIn, float diagIn)
+	{
+		Vector2 currentLocation = newLoc, direction = dirIn, center = centersOfRot[laneIn];
+		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
+		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
+		int turnCounter = 0, tempFrame = nowFrame2;
+
+		for (int i=0;i<140 ;i++)
+		{
+
+			if (turnPlan ==0) currentLocation += direction * speed * DELTA;
+			else if (turnPlan == 1) // turn right
+			{
+				switch (laneIn)
+				{
+				case (1):
+					if (!turnInitiate)
+					if (currentLocation.x > -39f)
+					{
+						extra = currentLocation.x + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (3):
+					if (!turnInitiate)
+					if (currentLocation.y < 39f)
+					{
+						extra = 39f - currentLocation.y;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (5):
+					if (!turnInitiate)
+					if (currentLocation.x < 39f)
+					{
+						extra = 39f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (7):
+					if (!turnInitiate)
+					if (currentLocation.y > -39f)
+					{
+						extra = currentLocation.y + 39f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rR;
+						direction = RotateCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rR;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+			} 
+			else if (turnPlan == -1) 
+			{
+				switch (laneIn)
+				{
+				case (0):
+					if (!turnInitiate)
+					if (currentLocation.x > -33f)
+					{
+						extra = currentLocation.x + 33f;
+						turnInitiate = true;
+					}
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (0, 1);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (2):
+					if (!turnInitiate)
+					if (currentLocation.y < 33f)
+					{
+						extra = 33f - currentLocation.y;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (0, -1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (1, 0);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (4):
+					if (!turnInitiate)
+					if (currentLocation.x < 33f)
+					{
+						extra = 33f - currentLocation.x;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (-1, 0), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (0, -1);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+
+				case (6):
+					if (!turnInitiate)
+					if (currentLocation.y > -33f)
+					{
+						extra = currentLocation.y + 33f;
+						turnInitiate = true;
+					}
+
+					if (!turnInitiate || turnDone)
+					{
+						currentLocation += direction * speed * DELTA;
+					} 
+					else
+					{
+
+						float arcLength = extra + speed * DELTA * turnCounter;
+						theta = arcLength / rL;
+						direction = RotateCCW (new Vector2 (0, 1), theta);
+
+						if (theta < HALF_PI)
+						{
+							currentLocation = center + RotateCCW (rotators2 [laneIn], theta);	
+							turnCounter++;
+						} 
+						else
+						{
+							float extraAngle = theta - HALF_PI;
+							float extraDist = extraAngle*rL;
+							direction = new Vector2 (-1, 0);
+							currentLocation = center + RotateCCW (rotators2 [laneIn], HALF_PI)
+								+ extraDist * direction;
+							turnDone = true;
+						}
+					}
+					break;
+				}
+
+			}
+
+			//now update
+			int j = startFrame+i;
+			j %= rowsInDataCenter;
+			int ind = lastIndexes[j]*7;
+			lastIndexes [j]++;
+			dataCenter[j,ind] = currentLocation.x;
+			dataCenter[j,ind+1] = currentLocation.y;
+			dataCenter[j,ind+2] = direction.x;
+			dataCenter[j,ind+3] = direction.y;
+			dataCenter[j,ind+4] = halfLengthIn;
+			dataCenter[j,ind+5] = halfWidthIn;
+			dataCenter[j,ind+6] = diagIn;
+
+			if (inStepSim)
+			{
+				j = tempFrame+360+i;
+				j %= rowsInD2;
+				ind = lastIndexes2[j]*7;
+				lastIndexes2 [j]++;
+				dataCenter2[j,ind] = currentLocation.x;
+				dataCenter2[j,ind+1] = currentLocation.y;
+				dataCenter2[j,ind+2] = direction.x;
+				dataCenter2[j,ind+3] = direction.y;
+				dataCenter2[j,ind+4] = halfLengthIn;
+				dataCenter2[j,ind+5] = halfWidthIn;
+				dataCenter2[j,ind+6] = diagIn;
+			}
+
+		}
+
+
+
+	}
+
+	public void PrintDataCenter ()
+	{
+		string s = "";
+
+		for (int i = 0; i < rowsInDataCenter; i++)
+		{
+			for (int j = 0; j < lastIndexes [i]; j++)
+				for (int k = 0; k < 7; k++)
+					s += dataCenter [i, 7 * j + k] + ", ";
+			
+			s += " index: " + lastIndexes [i] + "\n";
+		}
+		Debug.Log (s);
+	}
+
+	public void PrintDataCenter2 ()
+	{
+		string s = "";
+
+		for (int i = 0; i < rowsInD2; i++)
+		{
+			for (int j = 0; j < lastIndexes2 [i]; j++)
+				for (int k = 0; k < 7; k++)
+					s += dataCenter2 [i, 7 * j + k] + ", ";
+
+			s += " index: " + lastIndexes2 [i] + "\n";
+		}
+		Debug.Log (s);
+	}
 
 }

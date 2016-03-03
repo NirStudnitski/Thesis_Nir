@@ -12,52 +12,131 @@ public class QuadUnit : MonoBehaviour {
 	}
 	
 	// Update is called once per frame
-	void Update () 
+	void FixedUpdate () 
 	{
-		if (index < GameController.numCloseV && 
-			GameController.numCloseV > 1 && GameController.simulationOn) 
+		if (GameController.currentMethod == (int)GameController.methods.v1)
 		{
+			if (GameController.doneWithCheck)
+				transform.position = new Vector3 (10000, 0, 0);
+			else if (index < GameController.numCloseV &&
+			         GameController.numCloseV > 1 && GameController.simulationOn)
+			{
 			
-			Vector2 finalTemp;
-			float tempLength = GameController.futureVehicles [index].halfLength;
-			float tempWidth = GameController.futureVehicles [index].halfWidth;
-			Vector2 temp = GameController.futureVehicles [index].currentLocation;
-			Vector2 temp2 = GameController.futureVehicles [index].direction;
-			Vector2 temp2Perp = RotateCCW (temp2, HALF_PI) * tempWidth;
-			temp2 *= tempLength;
-			finalTemp = temp;
-			Mesh mesh = GetComponent<MeshFilter> ().mesh;
-			Vector3[] vertices = mesh.vertices;
+				Vector2 finalTemp;
+				float tempLength = GameController.futureVehicles [index].halfLength;
+				float tempWidth = GameController.futureVehicles [index].halfWidth;
+				Vector2 temp = GameController.futureVehicles [index].currentLocation;
+				Vector2 temp2 = GameController.futureVehicles [index].direction;
+				Vector2 temp2Perp = RotateCCW (temp2, HALF_PI) * tempWidth;
+				temp2 *= tempLength;
+				finalTemp = temp;
+				Mesh mesh = GetComponent<MeshFilter> ().mesh;
+				Vector3[] vertices = mesh.vertices;
 
 
-			int i = 0;
-			while (i < vertices.Length) {
-				switch (i) {
-				case 0:
-					finalTemp = temp2 + temp2Perp;	
-					break;
-				case 1:
-					finalTemp = -temp2 + temp2Perp;			
-					break;
-				case 2:
-					finalTemp = -temp2 - temp2Perp;
-					break;
-				case 3:
-					finalTemp = temp2 - temp2Perp;
-					break;
+				int i = 0;
+				while (i < vertices.Length)
+				{
+					switch (i)
+					{
+					case 0:
+						finalTemp = temp2 + temp2Perp;	
+						break;
+					case 1:
+						finalTemp = -temp2 + temp2Perp;			
+						break;
+					case 2:
+						finalTemp = -temp2 - temp2Perp;
+						break;
+					case 3:
+						finalTemp = temp2 - temp2Perp;
+						break;
+					}
+					vertices [i] = new Vector3 (finalTemp.x, 0, finalTemp.y);
+
+					i++;
 				}
-				vertices [i] = new Vector3 (finalTemp.x, 0, finalTemp.y);
+				mesh.vertices = vertices;
 
-				i++;
-			}
-			mesh.vertices = vertices;
-
-			mesh.triangles = new int[] { 0, 3, 2, 0, 2, 1 };
-			transform.position = new Vector3 (temp.x, -1.8f, temp.y);
+				mesh.triangles = new int[] { 0, 3, 2, 0, 2, 1 };
+				transform.position = new Vector3 (temp.x, -1.8f, temp.y);
 
 
+			} 
 		}
-		else transform.position = new Vector3 (10000, 0, 0);
+			
+		else if (GameController.currentMethod == (int)GameController.methods.v2)
+		{
+			int nextFrame = GameController.nowFrame2+8;
+			nextFrame %= GameController.rowsInD2;
+			if ((!GameController.inStepSim && index < GameController.lastIndexes[GameController.nowFrame])
+				|| (GameController.inStepSim && index < GameController.lastIndexes2[nextFrame]))
+			{
+
+				Vector2 finalTemp, temp, temp2, temp2Perp;
+	 			float tempLength, tempWidth;
+				if (GameController.inStepSim)
+				{
+					tempLength = GameController.dataCenter2 [nextFrame, index * 7 + 4];
+					tempWidth = GameController.dataCenter2 [nextFrame, index * 7 + 5];
+					temp = new Vector2 (GameController.dataCenter2 [nextFrame, index * 7], 
+						GameController.dataCenter2 [nextFrame, index * 7 + 1]);
+					temp2 = new Vector2 (GameController.dataCenter2 [nextFrame, index * 7 + 2], 
+						GameController.dataCenter2 [nextFrame, index * 7 + 3]);
+					temp2Perp = RotateCCW (temp2, HALF_PI) * tempWidth;
+					temp2 *= tempLength;
+					finalTemp = temp;
+				}
+				else 
+				{
+					tempLength = GameController.dataCenter [GameController.nowFrame, index * 7 + 4];
+					tempWidth = GameController.dataCenter [GameController.nowFrame, index * 7 + 5];
+					temp = new Vector2 (GameController.dataCenter [GameController.nowFrame, index * 7], 
+							GameController.dataCenter [GameController.nowFrame, index * 7 + 1]);
+					temp2 = new Vector2 (GameController.dataCenter [GameController.nowFrame, index * 7 + 2], 
+							GameController.dataCenter [GameController.nowFrame, index * 7 + 3]);
+					temp2Perp = RotateCCW (temp2, HALF_PI) * tempWidth;
+					temp2 *= tempLength;
+					finalTemp = temp;
+				}
+					
+				Mesh mesh = GetComponent<MeshFilter> ().mesh;
+				Vector3[] vertices = mesh.vertices;
+
+
+				int i = 0;
+				while (i < vertices.Length)
+				{
+					switch (i)
+					{
+					case 0:
+							finalTemp = temp2 + temp2Perp;	
+							break;
+					case 1:
+							finalTemp = -temp2 + temp2Perp;			
+							break;
+					case 2:
+							finalTemp = -temp2 - temp2Perp;
+							break;
+					case 3:
+							finalTemp = temp2 - temp2Perp;
+							break;
+					}
+					vertices [i] = new Vector3 (finalTemp.x, 0, finalTemp.y);
+
+					i++;
+				}
+				mesh.vertices = vertices;
+
+				mesh.triangles = new int[] { 0, 3, 2, 0, 2, 1 };
+				transform.position = new Vector3 (temp.x, -1.8f, temp.y);
+
+
+			} 
+			else transform.position = new Vector3 (10000, 0, 0);
+		}
+
+		
 	}
 
 	public void SetIndex(int i)
