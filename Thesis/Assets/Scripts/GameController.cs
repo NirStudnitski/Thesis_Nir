@@ -28,10 +28,11 @@ public class GameController : MonoBehaviour {
 
 	//for V2
 	public static float[,] dataCenter, dataCenter2; //0= loc.x, 1= loc.y, 2= dir.x, 3= dir.y, 4= halflength, 5= halfwidth, 6= halfdiagonal
-	public static int nowFrame = 0, nowFrame2 =0; // the index of the current time frame
+	public static int nowFrame = 0; // the index of the current time frame
 	public static int[] lastIndexes, lastIndexes2;
-	public static int rowsInDataCenter = 150, rowsInD2 = 500;
+	public static int rowsInDataCenter = 1000;
 	public static bool inStepSim = true; //to toggle is simulation is of future or now
+	public static bool cameraAbove = false;
 
 
 
@@ -111,13 +112,9 @@ public class GameController : MonoBehaviour {
 
 		if (currentMethod == (int)methods.v2)
 		{
-			dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX/2];
+			dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX];
 			lastIndexes = new int[rowsInDataCenter];
-			if (inStepSim)
-			{
-				dataCenter2 = new float[rowsInD2, ACTIVE_V_MAX / 2];
-				lastIndexes2 = new int[rowsInD2];
-			}
+
 
 		}
 
@@ -156,12 +153,7 @@ public class GameController : MonoBehaviour {
 				lastIndexes [nowFrame] = 0;
 				nowFrame++;
 				nowFrame %= rowsInDataCenter;
-				if (inStepSim)
-				{
-					lastIndexes2 [nowFrame2] = 0;
-					nowFrame2++;
-					nowFrame2 %= rowsInD2;
-				}
+
 			}
 		}
 
@@ -441,8 +433,13 @@ public class GameController : MonoBehaviour {
 		collisionOn = !collisionOn;
 		if (collisionOn) collisionButton.GetComponentInChildren<Text>().text = "Collisions: ON";
 		else collisionButton.GetComponentInChildren<Text>().text = "Collisions: OFF";
+
 	}
 
+	public void QuitGame()
+	{
+		Application.Quit();
+	}
 	public void ChangeSimulationOn()
 	{
 		simulationOn = !simulationOn;
@@ -754,16 +751,22 @@ public class GameController : MonoBehaviour {
 
 
 			deltaFrame = (int) Mathf.Floor(231f / (suggestedSpeed*DELTA));
+			string blal = "speed = " + suggestedSpeed + ", now frame = " + nowFrame + ", delta Frame = " + deltaFrame;
 			startFrame = nowFrame + deltaFrame;
 			startFrame %= rowsInDataCenter;
+			blal += "\n startFrame = " + startFrame;
+
 
 			newLoc = locIn + dirIn * suggestedSpeed * deltaFrame*DELTA;
+			blal += "\n new location = (" + newLoc.x + ", "  + newLoc.y+ ")";
+			Debug.Log (blal);
 
 			futureCollisionDetected = AdvanceAndCheck (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
 
 			if (!futureCollisionDetected)
 			{
-				AdvanceAndUpdate (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
+				AdvanceAndUpdate (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, 
+									dirIn, halfLengthIn, halfWidthIn, diagIn);
 
 				GameObject temp = GameObject.FindGameObjectWithTag ("Vehicle Checked");
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
@@ -782,9 +785,10 @@ public class GameController : MonoBehaviour {
 
 		notExceedMax = true;
 		deltaSpeed = 0;
-		pause = false;
-		//PrintDataCenter2 ();
+
+		//PrintDataCenter ();
 		yield return new WaitForSeconds (0);
+		pause = false;
 
 	}
 
@@ -796,6 +800,12 @@ public class GameController : MonoBehaviour {
 		{
 			futureVehicles[i].UpdateAndAdvance(DELTA, multiplier);
 		}
+	}
+
+	public void ToggleCam()
+	{
+
+		cameraAbove = !cameraAbove;
 	}
 
 	public static void PrintLaneAvail()
@@ -850,7 +860,8 @@ public class GameController : MonoBehaviour {
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
 		int turnCounter = 0;
-
+		startFrame++;
+		startFrame %= rowsInDataCenter;
 		for (int i=0;i<140 && !futureCollisionDetected ;i++)
 		{
 			
@@ -1153,9 +1164,11 @@ public class GameController : MonoBehaviour {
 				}
 
 			}
+
 			//now check collision
 			for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
 			{
+				
 				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
 					diagIn, dataCenter[startFrame,7*j+6]))
 				{
@@ -1182,10 +1195,11 @@ public class GameController : MonoBehaviour {
 	private void AdvanceAndUpdate(float speed, int startFrame, Vector2 newLoc,int laneIn, int turnPlan, Vector2 dirIn, 
 		float halfLengthIn, float halfWidthIn, float diagIn)
 	{
+		
 		Vector2 currentLocation = newLoc, direction = dirIn, center = centersOfRot[laneIn];
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
-		int turnCounter = 0, tempFrame = nowFrame2;
+		int turnCounter = 0;
 
 		for (int i=0;i<140 ;i++)
 		{
@@ -1503,20 +1517,6 @@ public class GameController : MonoBehaviour {
 			dataCenter[j,ind+5] = halfWidthIn;
 			dataCenter[j,ind+6] = diagIn;
 
-			if (inStepSim)
-			{
-				j = tempFrame+360+i;
-				j %= rowsInD2;
-				ind = lastIndexes2[j]*7;
-				lastIndexes2 [j]++;
-				dataCenter2[j,ind] = currentLocation.x;
-				dataCenter2[j,ind+1] = currentLocation.y;
-				dataCenter2[j,ind+2] = direction.x;
-				dataCenter2[j,ind+3] = direction.y;
-				dataCenter2[j,ind+4] = halfLengthIn;
-				dataCenter2[j,ind+5] = halfWidthIn;
-				dataCenter2[j,ind+6] = diagIn;
-			}
 
 		}
 
@@ -1530,28 +1530,17 @@ public class GameController : MonoBehaviour {
 
 		for (int i = 0; i < rowsInDataCenter; i++)
 		{
+			s += "Index = " + i + " ";
 			for (int j = 0; j < lastIndexes [i]; j++)
 				for (int k = 0; k < 7; k++)
 					s += dataCenter [i, 7 * j + k] + ", ";
 			
-			s += " index: " + lastIndexes [i] + "\n";
+			s += " last index: " + lastIndexes [i] + "\n";
 		}
 		Debug.Log (s);
 	}
 
-	public void PrintDataCenter2 ()
-	{
-		string s = "";
 
-		for (int i = 0; i < rowsInD2; i++)
-		{
-			for (int j = 0; j < lastIndexes2 [i]; j++)
-				for (int k = 0; k < 7; k++)
-					s += dataCenter2 [i, 7 * j + k] + ", ";
 
-			s += " index: " + lastIndexes2 [i] + "\n";
-		}
-		Debug.Log (s);
-	}
 
 }
