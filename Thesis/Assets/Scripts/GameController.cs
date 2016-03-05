@@ -462,10 +462,10 @@ public class GameController : MonoBehaviour {
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
 		//Debug.Log ("FULL triggered");
-		bool runDiagnostic = false;
+		bool runDiagnostic = true;
 		string rtnS = "";
 		Vector2 aDirTemp = aDir;
-		if (runDiagnostic) rtnS = "Collision detection: In: a(" + aIn.x + ", " + aIn.y + "), b("
+		if (runDiagnostic) rtnS = "Collision detection: \nIn: a(" + aIn.x + ", " + aIn.y + "), b("
 		             + bIn.x + ", " + bIn.y + "), \naDir(" + aDir.x + ", " + aDir.y + "), bDir("
 		             + bDir.x + ", " + bDir.y + ")\n";
 		
@@ -759,8 +759,8 @@ public class GameController : MonoBehaviour {
 
 			newLoc = locIn + dirIn * suggestedSpeed * deltaFrame*DELTA;
 			blal += "\n new location = (" + newLoc.x + ", "  + newLoc.y+ ")";
-			Debug.Log (blal);
-
+			Debug.Log (blal + "\n before addition: \n");
+			PrintDataCenterRange (startFrame, startFrame+140);
 			futureCollisionDetected = AdvanceAndCheck (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
 
 			if (!futureCollisionDetected)
@@ -772,7 +772,8 @@ public class GameController : MonoBehaviour {
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 				int laneNow = temp.GetComponent<Vehicle> ().GetLane ();
 				temp.tag = "Untagged";
-
+				Debug.Log (blal + "\n after addition: \n");
+				PrintDataCenterRange (startFrame, startFrame+140);
 				frameAtInstantiation [laneNow] = frameCounter;
 				halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
 				lastVehicleSpeed [laneNow] = suggestedSpeed;
@@ -860,11 +861,34 @@ public class GameController : MonoBehaviour {
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
 		int turnCounter = 0;
-		startFrame++;
-		startFrame %= rowsInDataCenter;
+
 		for (int i=0;i<140 && !futureCollisionDetected ;i++)
 		{
-			
+			startFrame++;
+			startFrame %= rowsInDataCenter;
+			// check collision ecery other frame
+			if (i%2==0) for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
+			{
+
+				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
+					diagIn, dataCenter[startFrame,7*j+6]))
+				{
+					Debug.Log ("Quick Returned TRUE on frame " + (startFrame));	
+					if (FullCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]), 
+						halfWidthIn, dataCenter[startFrame,7*j+5],
+						halfLengthIn, dataCenter[startFrame,7*j+4],
+						direction, new Vector2(dataCenter[startFrame,7*j+2],
+							dataCenter[startFrame,7*j+3])))
+					{
+						Debug.Log ("Collision");
+						futureCollisionDetected = true;
+					}
+
+
+				}
+			} 
+
+			//advance
 			if (turnPlan ==0) currentLocation += direction * speed * DELTA;
 			else if (turnPlan == 1) // turn right
 			{
@@ -1165,27 +1189,7 @@ public class GameController : MonoBehaviour {
 
 			}
 
-			//now check collision
-			for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
-			{
-				
-				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
-					diagIn, dataCenter[startFrame,7*j+6]))
-				{
-								
-					if (FullCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]), 
-										halfWidthIn, dataCenter[startFrame,7*j+5],
-										halfLengthIn, dataCenter[startFrame,7*j+4],
-										direction, new Vector2(dataCenter[startFrame,7*j+2],
-										dataCenter[startFrame,7*j+3])))
-					{
-						Debug.Log ("Collision");
-						futureCollisionDetected = true;
-					}
-						
-					
-				}
-			} 
+
 		}
 
 		return futureCollisionDetected;
@@ -1204,6 +1208,18 @@ public class GameController : MonoBehaviour {
 		for (int i=0;i<140 ;i++)
 		{
 
+			int j = startFrame+i;
+			j %= rowsInDataCenter;
+			int ind = lastIndexes[j]*7;
+			lastIndexes [j]++;
+			dataCenter[j,ind] = currentLocation.x;
+			dataCenter[j,ind+1] = currentLocation.y;
+			dataCenter[j,ind+2] = direction.x;
+			dataCenter[j,ind+3] = direction.y;
+			dataCenter[j,ind+4] = halfLengthIn;
+			dataCenter[j,ind+5] = halfWidthIn;
+			dataCenter[j,ind+6] = diagIn;
+
 			if (turnPlan ==0) currentLocation += direction * speed * DELTA;
 			else if (turnPlan == 1) // turn right
 			{
@@ -1504,18 +1520,7 @@ public class GameController : MonoBehaviour {
 
 			}
 
-			//now update
-			int j = startFrame+i;
-			j %= rowsInDataCenter;
-			int ind = lastIndexes[j]*7;
-			lastIndexes [j]++;
-			dataCenter[j,ind] = currentLocation.x;
-			dataCenter[j,ind+1] = currentLocation.y;
-			dataCenter[j,ind+2] = direction.x;
-			dataCenter[j,ind+3] = direction.y;
-			dataCenter[j,ind+4] = halfLengthIn;
-			dataCenter[j,ind+5] = halfWidthIn;
-			dataCenter[j,ind+6] = diagIn;
+
 
 
 		}
@@ -1536,6 +1541,23 @@ public class GameController : MonoBehaviour {
 					s += dataCenter [i, 7 * j + k] + ", ";
 			
 			s += " last index: " + lastIndexes [i] + "\n";
+		}
+		Debug.Log (s);
+	}
+
+	public void PrintDataCenterRange (int a, int b)
+	{
+		string s = "";
+
+		for (int i = a; i < b; i++)
+		{
+			int iM = i % rowsInDataCenter;
+			s += "Index = " + iM + " ";
+			for (int j = 0; j < lastIndexes [iM]; j++)
+				for (int k = 0; k < 7; k++)
+					s += dataCenter [iM, 7 * j + k] + ", ";
+
+			s += " last index: " + lastIndexes [iM] + "\n";
 		}
 		Debug.Log (s);
 	}
