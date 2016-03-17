@@ -85,11 +85,11 @@ public class GameController : MonoBehaviour {
 	static bool notExceedMax = true;
 
 	//half each vehicle's length
-	private float[] sizes = { 8.6f, 10.5f, 15.95f, 10.7f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f,7.15f };
+	private float[] sizes = { 8.6f, 10.5f, 15.95f, 10.7f,7.15f,7.15f,7.15f,8f,7.15f,7.15f,7.15f,7.15f,7.15f };
 	//half each vehicle's width
-	private float[] widths = { 3.8f, 4.5f, 4.3f, 3.25f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f,2.95f };
+	private float[] widths = { 3.8f, 4.5f, 4.3f, 3.25f,2.95f,2.95f,2.95f,3.3f,2.95f,2.95f,2.95f,2.95f,2.95f };
 	//half each vehicle's diagonal
-	private float[] diagonals = { 9.4f, 11.5f, 16.5f, 11.2f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f,7.7f };
+	private float[] diagonals = { 9.4f, 11.5f, 16.5f, 11.2f,7.7f,7.7f,7.7f,8.7f,7.7f,7.7f,7.7f,7.7f,7.7f };
 
 	//---------------------------------------------------------------
 
@@ -134,7 +134,6 @@ public class GameController : MonoBehaviour {
 
 	}
 
-	// Update is called once per frame
 	void FixedUpdate () 
 	{
 		elapsedTime += DELTA;
@@ -452,7 +451,7 @@ public class GameController : MonoBehaviour {
 	//aDiag represents half the diagonal 
 	public static bool QuickCollisionDetection (Vector2 aIn, Vector2 bIn, float aDiag, float bDiag)
 	{
-		Debug.Log ("QUICK triggered");
+		//Debug.Log ("QUICK triggered");
 		return (aIn.x -bIn.x)*(aIn.x -bIn.x) + (aIn.y -bIn.y)*(aIn.y -bIn.y) < (aDiag + bDiag)*(aDiag + bDiag);
 			
 	}
@@ -462,7 +461,7 @@ public class GameController : MonoBehaviour {
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
 		//Debug.Log ("FULL triggered");
-		bool runDiagnostic = true;
+		bool runDiagnostic = false;
 		string rtnS = "";
 		Vector2 aDirTemp = aDir;
 		if (runDiagnostic) rtnS = "Collision detection: \nIn: a(" + aIn.x + ", " + aIn.y + "), b("
@@ -751,16 +750,16 @@ public class GameController : MonoBehaviour {
 
 
 			deltaFrame = (int) Mathf.Floor(231f / (suggestedSpeed*DELTA));
-			string blal = "speed = " + suggestedSpeed + ", now frame = " + nowFrame + ", delta Frame = " + deltaFrame;
+			//string blal = "speed = " + suggestedSpeed + ", now frame = " + nowFrame + ", delta Frame = " + deltaFrame;
 			startFrame = nowFrame + deltaFrame;
 			startFrame %= rowsInDataCenter;
-			blal += "\n startFrame = " + startFrame;
+			//blal += "\n startFrame = " + startFrame;
 
 
 			newLoc = locIn + dirIn * suggestedSpeed * deltaFrame*DELTA;
-			blal += "\n new location = (" + newLoc.x + ", "  + newLoc.y+ ")";
-			Debug.Log (blal + "\n before addition: \n");
-			PrintDataCenterRange (startFrame, startFrame+140);
+			//blal += "\n new location = (" + newLoc.x + ", "  + newLoc.y+ ")";
+			//Debug.Log (blal + "\n before addition: \n");
+			//PrintDataCenterRange (startFrame, startFrame+140);
 			futureCollisionDetected = AdvanceAndCheck (suggestedSpeed, startFrame, newLoc,laneIn, turnPlanIn, dirIn, halfLengthIn, halfWidthIn, diagIn);
 
 			if (!futureCollisionDetected)
@@ -772,8 +771,8 @@ public class GameController : MonoBehaviour {
 				temp.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 				int laneNow = temp.GetComponent<Vehicle> ().GetLane ();
 				temp.tag = "Untagged";
-				Debug.Log (blal + "\n after addition: \n");
-				PrintDataCenterRange (startFrame, startFrame+140);
+			//	Debug.Log (blal + "\n after addition: \n");
+				//PrintDataCenterRange (startFrame, startFrame+140);
 				frameAtInstantiation [laneNow] = frameCounter;
 				halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
 				lastVehicleSpeed [laneNow] = suggestedSpeed;
@@ -783,7 +782,7 @@ public class GameController : MonoBehaviour {
 		}
 		if (suggestedSpeed >= 70f || suggestedSpeed <= 10f)
 			Debug.Log ("No solution found.");
-
+		
 		notExceedMax = true;
 		deltaSpeed = 0;
 
@@ -873,7 +872,7 @@ public class GameController : MonoBehaviour {
 				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
 					diagIn, dataCenter[startFrame,7*j+6]))
 				{
-					Debug.Log ("Quick Returned TRUE on frame " + (startFrame));	
+					//Debug.Log ("Quick Returned TRUE on frame " + (startFrame));	
 					if (FullCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]), 
 						halfWidthIn, dataCenter[startFrame,7*j+5],
 						halfLengthIn, dataCenter[startFrame,7*j+4],

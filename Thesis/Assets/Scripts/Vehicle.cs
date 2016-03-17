@@ -28,6 +28,9 @@ public class Vehicle : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 
+		if (turnDone)
+			speed = 60f;
+
 		if (initiate)
 		{
 			XYZdir.x = XYdir.x;
@@ -37,7 +40,49 @@ public class Vehicle : MonoBehaviour {
 			
 		if (!GameController.pause && noCollision) 
 		{
-			if (turnPlan ==0) transform.position += XYZdir * speed * GameController.DELTA;
+			if (turnPlan == 0)
+			{
+				transform.position += XYZdir * speed * GameController.DELTA;
+				if (!turnDone)
+				{
+					switch (lane)
+					{
+					case (1):
+					case(0):
+						if (transform.position.x > 33f)
+						{
+							turnDone = true;
+							speed = 60f;
+						}
+						break;
+					case (2):
+					case(3):
+						if (transform.position.z < -33f)
+						{
+							turnDone = true;
+							speed = 60f;
+						}
+						break;
+					case (4):
+					case(5):
+						if (transform.position.x < -33f)
+						{
+							turnDone = true;
+							speed = 60f;
+						}
+						break;
+					case (6):
+					case(7):
+						if (transform.position.z > 33f)
+						{
+							turnDone = true;
+							speed = 60f;
+						}
+						break;
+					}
+
+				}
+			}
 			else if (turnPlan == 1) // turn right
 			{
 				switch (lane)
