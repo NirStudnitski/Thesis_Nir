@@ -19,6 +19,7 @@ public class GameController : MonoBehaviour {
 	public static int numCloseV=0, simulationSpeed = 5, frameCounter=0;
 	public Text rateText, rateShadow;
 	public Text countText, countShadow;
+	public Text noSolText, noSolShadow;
 	public Text leftText, leftShadow;
 	public Text rightText, rightShadow;
 	public Text time, timeShadow;
@@ -341,10 +342,10 @@ public class GameController : MonoBehaviour {
 					Vector3 center = new Vector3 (centersOfRot [lane].x, YCoor [vehicleIndex], centersOfRot [lane].y);
 					int type = (vehicleIndex > 4 ? 4 : vehicleIndex);
 					vehicle.GetComponent<Vehicle> ().SetType (type);
-					vehicle.GetComponent<Vehicle> ().SetSpeed (everyonesSpeed);
+
 					vehicle.GetComponent<Vehicle> ().SetDirection (directionGiven);
 					vehicle.GetComponent<Vehicle> ().SetCenter (center);
-					suggestedSpeed = everyonesSpeed;
+
 					vehicle.GetComponent<Vehicle> ().SetSize (sizes [vehicleIndex]);
 					vehicle.tag = "Vehicle Checked";
 					vehicle.name = "" + ++vehicleCounter;
@@ -370,6 +371,11 @@ public class GameController : MonoBehaviour {
 					laneAvailable [lane] = false;
 
 					currentMaxSpeed = CalcMaxSpeed (lane, sizes [vehicleIndex]);
+
+					suggestedSpeed = System.Math.Min(everyonesSpeed, currentMaxSpeed);
+					Debug.Log ("for car number " + vehicleCounter +" max speed = " + currentMaxSpeed + ", suggested speed = " + suggestedSpeed);
+					vehicle.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
+
 
 					if (currentMethod == (int) methods.v1)
 					{
@@ -719,9 +725,10 @@ public class GameController : MonoBehaviour {
 												float halfLengthIn, float halfWidthIn, 
 												Vector2 dirIn, float diagIn)
 	{
-
+		bool notExceedMax = true;
 		int deltaFrame, startFrame;
 		Vector2 newLoc;
+		float beginningSpeed = suggestedSpeed-1;
 
 		while (suggestedSpeed < 70f && suggestedSpeed > 10f)
 		{
@@ -740,11 +747,11 @@ public class GameController : MonoBehaviour {
 			{
 				if (deltaSpeed >= 0)
 					deltaSpeed += 1f;
-				suggestedSpeed = everyonesSpeed + deltaSpeed;
+				suggestedSpeed = beginningSpeed + deltaSpeed;
 				deltaSpeed *= -1;
 			} else
 			{
-				suggestedSpeed = everyonesSpeed + deltaSpeed;
+				suggestedSpeed = beginningSpeed + deltaSpeed;
 				deltaSpeed -= 1f;
 			}
 
@@ -776,12 +783,16 @@ public class GameController : MonoBehaviour {
 				frameAtInstantiation [laneNow] = frameCounter;
 				halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
 				lastVehicleSpeed [laneNow] = suggestedSpeed;
+				//Debug.Log ("car number " + vehicleCounter + "final speed is " + suggestedSpeed);
 				break;
 
 			}
 		}
 		if (suggestedSpeed >= 70f || suggestedSpeed <= 10f)
-			Debug.Log ("No solution found.");
+		{
+			noSolText.text = "No solution found.";
+			noSolShadow.text = "No solution found.";
+		}
 		
 		notExceedMax = true;
 		deltaSpeed = 0;
@@ -841,12 +852,14 @@ public class GameController : MonoBehaviour {
 		else
 		{
 			int deltaFrame = frameCounter - frameAtInstantiation [lane];
-			float distanceRemaining = 231f - ((float)deltaFrame) * lastVehicleSpeed [lane] + halfLengthAtInst [lane];
+			float distanceRemaining = 231f - ((float)deltaFrame) * lastVehicleSpeed [lane]*DELTA + halfLengthAtInst [lane];
+
 			if (distanceRemaining < 0)
 				rtn = 1000f;
 			else
 			{
 				float timeRemaining = distanceRemaining / lastVehicleSpeed [lane];
+				Debug.Log ("time remainin = " + timeRemaining);
 				rtn = (231f - myHalfLength) / timeRemaining;
 			}
 		}
