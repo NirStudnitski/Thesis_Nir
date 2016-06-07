@@ -373,7 +373,7 @@ public class GameController : MonoBehaviour {
 					currentMaxSpeed = CalcMaxSpeed (lane, sizes [vehicleIndex]);
 
 					suggestedSpeed = System.Math.Min(everyonesSpeed, currentMaxSpeed);
-					Debug.Log ("for car number " + vehicleCounter +" max speed = " + currentMaxSpeed + ", suggested speed = " + suggestedSpeed);
+					//Debug.Log ("for car number " + vehicleCounter +" max speed = " + currentMaxSpeed + ", suggested speed = " + suggestedSpeed);
 					vehicle.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 
 
@@ -397,8 +397,8 @@ public class GameController : MonoBehaviour {
 					if (currentMethod == (int)methods.v2)
 					{
 						pause = true;
-						StartCoroutine(CheckFutureCollisionV2 (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-						sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
+						StartCoroutine(CheckFutureCollisionV2 (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), 
+							assignedTurn, lane, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
 							diagonals [vehicleIndex]));
 					}
 
@@ -461,7 +461,8 @@ public class GameController : MonoBehaviour {
 		return (aIn.x -bIn.x)*(aIn.x -bIn.x) + (aIn.y -bIn.y)*(aIn.y -bIn.y) < (aDiag + bDiag)*(aDiag + bDiag);
 			
 	}
-		
+
+
 	//aWidth represents half the width of a vehicle, aLength represents half the length
 	public static bool FullCollisionDetection (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
@@ -560,7 +561,6 @@ public class GameController : MonoBehaviour {
 				bLength, aLength, bDir, aDirTemp);
 		return rtn;
 	}
-
 	public static bool FullCollisionDetectionReverse (Vector2 aIn, Vector2 bIn, float aWidth, float bWidth,
 		float aLength, float bLength, Vector2 aDir, Vector2 bDir)
 	{
@@ -852,7 +852,8 @@ public class GameController : MonoBehaviour {
 		else
 		{
 			int deltaFrame = frameCounter - frameAtInstantiation [lane];
-			float distanceRemaining = 231f - ((float)deltaFrame) * lastVehicleSpeed [lane]*DELTA + halfLengthAtInst [lane];
+			float distanceRemaining = 231f - ((float)deltaFrame) * lastVehicleSpeed [lane]*DELTA
+				+ halfLengthAtInst [lane];
 
 			if (distanceRemaining < 0)
 				rtn = 1000f;
