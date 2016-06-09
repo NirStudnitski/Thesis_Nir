@@ -8,8 +8,8 @@ using System.Collections.Generic;
 
 public class GameController : MonoBehaviour {
 
-	public static int currentMethod = 1;
-	public enum methods { v1, v2};
+	public static int currentMethod = 2;
+	public enum methods { v1, v2, TL};
 	private float waitTime;
 	public static VehicleList activeVList; 
 	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0, everyonesSpeed = 40;
@@ -35,7 +35,9 @@ public class GameController : MonoBehaviour {
 	public static bool inStepSim = true; //to toggle is simulation is of future or now
 	public static bool cameraAbove = false;
 
-
+	// for STOP LIGHTS
+	public static int TLSeconds = 4;
+	public static bool changeLights = false;
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
@@ -144,6 +146,57 @@ public class GameController : MonoBehaviour {
 			timeText = "Elapsed Time: " + elapsedTime.ToString ("F2") + " s";
 			time.text = timeText;
 			timeShadow.text = timeText;
+		}
+
+		if (currentMethod == (int)methods.TL)
+		{
+			if (!pause)
+			{
+				if (frameCounter % ((125 * TLSeconds) / 2) == 0)
+				{
+					changeLights = !changeLights;
+
+					if (changeLights)
+					{
+						GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
+						temp.transform.position = new Vector3 (-12f, 0.2f, 23f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+						temp = GameObject.FindGameObjectWithTag ("Red Light");
+						temp.transform.position = new Vector3 (-23.5f, 0.2f, -12f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+						temp = GameObject.FindGameObjectWithTag ("Green Light 2");
+						temp.transform.position = new Vector3 (12f, 0.2f, -23f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+						temp = GameObject.FindGameObjectWithTag ("Red Light 2");
+						temp.transform.position = new Vector3 (23.5f, 0.2f, 12f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+					} 
+					else
+					{
+						GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
+						temp.transform.position = new Vector3 (-23.5f, 0.2f, -12f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+						temp = GameObject.FindGameObjectWithTag ("Red Light");
+						temp.transform.position = new Vector3 (-12f, 0.2f, 23f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+						temp = GameObject.FindGameObjectWithTag ("Green Light 2");
+						temp.transform.position = new Vector3 (23.5f, 0.2f, 12f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+						temp = GameObject.FindGameObjectWithTag ("Red Light 2");
+						temp.transform.position = new Vector3 (12f, 0.2f, -23f);
+						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+					}
+				}
+
+			}
 		}
 
 		if (currentMethod == (int)methods.v2)
