@@ -2,6 +2,7 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 
 
 
@@ -38,6 +39,8 @@ public class GameController : MonoBehaviour {
 	// for STOP LIGHTS
 	public static int TLSeconds = 4;
 	public static bool changeLights = false;
+	SerializedObject tagManager;
+	SerializedProperty tagsProp;
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
@@ -111,7 +114,7 @@ public class GameController : MonoBehaviour {
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
-		if (currentMethod == (int) methods.v1) activeVList = new VehicleList();
+		if (currentMethod != (int) methods.v2) activeVList = new VehicleList();
 
 		if (currentMethod == (int)methods.v2)
 		{
@@ -121,6 +124,11 @@ public class GameController : MonoBehaviour {
 
 		}
 
+		if (currentMethod == (int)methods.TL)
+		{
+			tagManager = new SerializedObject (AssetDatabase.LoadAllAssetsAtPath ("ProjectSettings/TagManager.asset") [0]);
+			tagsProp = tagManager.FindProperty ("tags");
+		}
 
 		for (int i = 0; i < ACTIVE_V_MAX/10; i++) 
 		{
@@ -430,21 +438,33 @@ public class GameController : MonoBehaviour {
 					vehicle.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 
 
-					if (currentMethod == (int) methods.v1)
+					if (currentMethod != (int) methods.v2 )
 					{
 					//Debug.Log ("before last index = " + activeVList.lastIndex);
 						activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
 							type, diagonals [vehicleIndex]); 
 
-
-						//begin prepping your shadow runners list
-						futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
-							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], 
-							widths [vehicleIndex], activeVList.lastIndex, directionGiven, 
-							type, true, diagonals [vehicleIndex], centersOfRot [lane]);
+						if (currentMethod == (int)methods.v1)
+						{
+							//begin prepping your shadow runners list
+							futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
+								vehicleCounter, everyonesSpeed, sizes [vehicleIndex], 
+								widths [vehicleIndex], activeVList.lastIndex, directionGiven, 
+								type, true, diagonals [vehicleIndex], centersOfRot [lane]);
 						
-						CheckFutureCollisionV1 (lane);
+							CheckFutureCollisionV1 (lane);
+						} 
+						else
+						{
+							string s = "V " + vehicleCounter;
+							tagsProp.InsertArrayElementAtIndex(9+ vehicleCounter);
+							SerializedProperty n = tagsProp.GetArrayElementAtIndex(9+ vehicleCounter);
+							n.stringValue = s;
+							tagManager.ApplyModifiedProperties();
+							vehicle.tag = s;
+							
+						}
 					}
 
 					if (currentMethod == (int)methods.v2)
