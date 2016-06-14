@@ -21,8 +21,6 @@ public class Vehicle : MonoBehaviour {
 
 
 	void Start () {
-	
-
 	}
 	
 

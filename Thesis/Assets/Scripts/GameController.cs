@@ -12,8 +12,10 @@ public class GameController : MonoBehaviour {
 	public static int currentMethod = 2;
 	public enum methods { v1, v2, TL};
 	private float waitTime;
-	public static VehicleList activeVList; 
-	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0, everyonesSpeed = 40;
+	public static VehicleList activeVList;
+	public static VehicleList[] activeV; //per lane
+	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
+	public static float everyonesSpeed = 40;
 	public int vehicleCounter;
 	public static int nameBeingChecked;
 	public static string timeText;
@@ -114,7 +116,14 @@ public class GameController : MonoBehaviour {
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
-		if (currentMethod != (int) methods.v2) activeVList = new VehicleList();
+		if (currentMethod == (int) methods.v1) activeVList = new VehicleList();
+		if (currentMethod == (int)methods.TL)
+		{
+			activeV = new VehicleList[8];
+			for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
+			tagManager = new SerializedObject (AssetDatabase.LoadAllAssetsAtPath ("ProjectSettings/TagManager.asset") [0]);
+			tagsProp = tagManager.FindProperty ("tags");
+		}
 
 		if (currentMethod == (int)methods.v2)
 		{
@@ -124,11 +133,7 @@ public class GameController : MonoBehaviour {
 
 		}
 
-		if (currentMethod == (int)methods.TL)
-		{
-			tagManager = new SerializedObject (AssetDatabase.LoadAllAssetsAtPath ("ProjectSettings/TagManager.asset") [0]);
-			tagsProp = tagManager.FindProperty ("tags");
-		}
+
 
 		for (int i = 0; i < ACTIVE_V_MAX/10; i++) 
 		{
@@ -299,6 +304,22 @@ public class GameController : MonoBehaviour {
 			}
 		}
 
+		if (currentMethod == (int)methods.TL)
+		{
+			//ShowQuadData ();
+
+			if (!pause)
+			{
+				for (int i = 0; i < 8; i++)
+				{
+					activeV [i].UpdateList (DELTA);
+					activeV [i].UpdateSpeeds (i);
+				}
+
+
+			}
+		}
+
 			
 	}
 
@@ -418,8 +439,12 @@ public class GameController : MonoBehaviour {
 					if (lane % 2 == 1)
 						assignedTurn = (rightTurningPercent > Random.Range (0f, 50f) ? 1 : 0);
 					else
-						assignedTurn = (leftTurningPercent > Random.Range (0f, 50f) ? -1 : 0);
-				
+					{
+						if (currentMethod == (int)methods.TL)
+							assignedTurn = 0;
+						else assignedTurn = (leftTurningPercent > Random.Range (0f, 50f) ? -1 : 0);
+					}
+					
 					vehicle.GetComponent<Vehicle> ().SetTurnPlan (assignedTurn); 
 					vehicle.GetComponent<Vehicle> ().SetLane (lane); 
 
@@ -438,15 +463,14 @@ public class GameController : MonoBehaviour {
 					vehicle.GetComponent<Vehicle> ().SetSpeed (suggestedSpeed);
 
 
-					if (currentMethod != (int) methods.v2 )
+					if (currentMethod == (int) methods.v1 )
 					{
 					//Debug.Log ("before last index = " + activeVList.lastIndex);
 						activeVList.Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
 							type, diagonals [vehicleIndex]); 
 
-						if (currentMethod == (int)methods.v1)
-						{
+
 							//begin prepping your shadow runners list
 							futureVehicles [0] = new VehicleStat (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
 								vehicleCounter, everyonesSpeed, sizes [vehicleIndex], 
@@ -454,17 +478,21 @@ public class GameController : MonoBehaviour {
 								type, true, diagonals [vehicleIndex], centersOfRot [lane]);
 						
 							CheckFutureCollisionV1 (lane);
-						} 
-						else
-						{
-							string s = "V " + vehicleCounter;
-							tagsProp.InsertArrayElementAtIndex(9+ vehicleCounter);
-							SerializedProperty n = tagsProp.GetArrayElementAtIndex(9+ vehicleCounter);
-							n.stringValue = s;
-							tagManager.ApplyModifiedProperties();
-							vehicle.tag = s;
-							
-						}
+
+					}
+
+					if (currentMethod == (int) methods.TL)
+					{
+						activeV[lane].Add (new Vector2 (laneXZ [lane, 0], laneXZ [lane, 1]), assignedTurn, lane, 
+							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
+							type, diagonals [vehicleIndex]); 
+						
+						string s = "V " + vehicleCounter;
+						tagsProp.InsertArrayElementAtIndex(9+ vehicleCounter);
+						SerializedProperty n = tagsProp.GetArrayElementAtIndex(9+ vehicleCounter);
+						n.stringValue = s;
+						tagManager.ApplyModifiedProperties();
+						vehicle.tag = s;
 					}
 
 					if (currentMethod == (int)methods.v2)

@@ -100,6 +100,40 @@ public class VehicleList : MonoBehaviour{
 		for (int i=0;i <= lastIndex; i++) activeVehicles [i].UpdateAndAdvance (deltaTime);
 	}
 
+	public void UpdateSpeeds(int lane)
+	{
+		for (int i = 0; i <= lastIndex; i++)
+		{
+			// conditionals for traffic control, if stopped, mark first five to turn left
+			if (!activeVehicles [i].turnInitiate)
+			{
+				switch (lane)
+				{
+				case (1):
+				case(0):
+					if (activeVehicles [i].currentLocation.x > -60f)
+					{
+						if (GameController.changeLights)
+						{
+							activeVehicles [i].speed = 0;
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (0);
+						} else
+						{
+							activeVehicles [i].speed = GameController.everyonesSpeed;
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+						}
+					}
+					break;
+
+				}
+			} 
+
+
+		}
+	}
+
 	public float GetSpeed (int i)
 	{
 		return activeVehicles[i].speed;
