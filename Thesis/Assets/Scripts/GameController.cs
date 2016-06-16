@@ -39,10 +39,11 @@ public class GameController : MonoBehaviour {
 	public static bool cameraAbove = false;
 
 	// for STOP LIGHTS
-	public static int TLSeconds = 4;
+	public static int TLSeconds = 10;
 	public static bool changeLights = false;
 	SerializedObject tagManager;
 	SerializedProperty tagsProp;
+	public static bool[] doneTurning;
 
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 200;
@@ -123,6 +124,10 @@ public class GameController : MonoBehaviour {
 			for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
 			tagManager = new SerializedObject (AssetDatabase.LoadAllAssetsAtPath ("ProjectSettings/TagManager.asset") [0]);
 			tagsProp = tagManager.FindProperty ("tags");
+
+			doneTurning = new bool[8];
+			for (int i = 0; i < 8; i++)
+				doneTurning [i] = false;
 		}
 
 		if (currentMethod == (int)methods.v2)
@@ -168,6 +173,12 @@ public class GameController : MonoBehaviour {
 				if (frameCounter % ((125 * TLSeconds) / 2) == 0)
 				{
 					changeLights = !changeLights;
+
+					for (int i = 0; i < 8; i++)
+					{
+						activeV [i].OrderQueue (i);
+					}
+
 
 					if (changeLights)
 					{
