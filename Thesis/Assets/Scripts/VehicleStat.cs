@@ -6,6 +6,7 @@ public class VehicleStat  {
 	const float TWO_PI = 6.2831853f, HALF_PI = 1.570796326f, TO_DEG = 360f/TWO_PI;
 	public Vector2 currentLocation, direction, center;
 	public bool turnInitiate = false, isQuad = false, turnDone = false, stopping = false;
+	public bool turnIn = false, turnD = false, stopped2 = false;
 	public int turnPlan, lane, name, index, turnCounter = 0, type, inLine = -255;
 	public float speed,  halfLength, halfWidth, halfDiag, extra, theta,  accel = 0, stdAccel = 0.3f;
 

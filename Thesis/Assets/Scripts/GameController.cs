@@ -174,10 +174,18 @@ public class GameController : MonoBehaviour {
 				{
 					changeLights = !changeLights;
 
-					for (int i = 0; i < 8; i++)
+					if (changeLights)
+						for (int i = 0; i < 8; i += 4)
+						{
+							activeV [i].OrderQueue (i);
+							activeV [i+1].OrderQueue (i+1);
+						}
+					else for (int i = 2; i < 8; i += 4)
 					{
 						activeV [i].OrderQueue (i);
+						activeV [i+1].OrderQueue (i+1);
 					}
+					
 
 
 					if (changeLights)
@@ -324,7 +332,7 @@ public class GameController : MonoBehaviour {
 				for (int i = 0; i < 8; i++)
 				{
 					activeV [i].UpdateList (DELTA);
-					activeV [i].UpdateSpeeds (i);
+					activeV [i].UpdateSpeeds (i, frameCounter);
 				}
 
 
