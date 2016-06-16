@@ -134,12 +134,46 @@ public class VehicleList : MonoBehaviour{
 				
 				}
 				break;
+			case (2):
+			case(3):
+				if (!GameController.changeLights)
+				{
+					if (activeVehicles [i].currentLocation.y > 50f)
+					{
+						if (i == 0)
+							activeVehicles [i].inLine = 0;
+						else
+							activeVehicles [i].inLine = activeVehicles [i - 1].inLine + 1;
+						if (activeVehicles [i].inLine < 0)
+							activeVehicles [i].inLine = 0;
+
+					}
+
+				}
+				break;
 
 			case (4):
 			case(5):
 				if (GameController.changeLights)
 				{
 					if (activeVehicles [i].currentLocation.x > 50f)
+					{
+						if (i == 0)
+							activeVehicles [i].inLine = 0;
+						else
+							activeVehicles [i].inLine = activeVehicles [i - 1].inLine + 1;
+						if (activeVehicles [i].inLine < 0)
+							activeVehicles [i].inLine = 0;
+
+					}
+
+				}
+				break;
+			case (6):
+			case(7):
+				if (!GameController.changeLights)
+				{
+					if (activeVehicles [i].currentLocation.y < -50f)
 					{
 						if (i == 0)
 							activeVehicles [i].inLine = 0;
@@ -181,7 +215,7 @@ public class VehicleList : MonoBehaviour{
 			case (0):
 				if (temp2 != null)
 				{
-					Debug.Log (temp2.GetComponent<Vehicle> ().transform.position.x);
+					
 					if (temp2.GetComponent<Vehicle> ().transform.position.x > 0)
 					{
 						GameController.doneTurning [lane] = true;
@@ -189,12 +223,35 @@ public class VehicleList : MonoBehaviour{
 					}
 				} 
 				break;
+		case (2):
+			if (temp2 != null)
+			{
+					Debug.Log (temp2.GetComponent<Vehicle> ().transform.position.z);
+				if (temp2.GetComponent<Vehicle> ().transform.position.z < 0)
+				{
+						Debug.Log ("did for lane 2");
+					GameController.doneTurning [lane] = true;
+
+				}
+			} 
+			break;
 
 		case (4):
 			if (temp2 != null)
 			{
-				Debug.Log (temp2.GetComponent<Vehicle> ().transform.position.x);
+				
 				if (temp2.GetComponent<Vehicle> ().transform.position.x < 0)
+				{
+					GameController.doneTurning [lane] = true;
+
+				}
+			} 
+			break;
+		case (6):
+			if (temp2 != null)
+			{
+
+				if (temp2.GetComponent<Vehicle> ().transform.position.z > 0)
 				{
 					GameController.doneTurning [lane] = true;
 
@@ -288,6 +345,115 @@ public class VehicleList : MonoBehaviour{
 							if (activeVehicles [i].stopping)
 							{
 								if (lane == 1 && !GameController.doneTurning [4])
+									activeVehicles [i].speed = 0;
+								else
+								{
+									activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+									if (activeVehicles [i].speed > GameController.everyonesSpeed)
+										activeVehicles [i].speed = GameController.everyonesSpeed;
+									else if (activeVehicles [i].speed < 0)
+										activeVehicles [i].speed = 0;
+								}
+							} else
+							{
+								activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+								if (activeVehicles [i].speed > GameController.everyonesSpeed)
+									activeVehicles [i].speed = GameController.everyonesSpeed;
+								else if (activeVehicles [i].speed < 0)
+									activeVehicles [i].speed = 0;
+							}
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+						}
+					}
+
+				} else
+				{
+					activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+					if (activeVehicles [i].speed > GameController.everyonesSpeed)
+						activeVehicles [i].speed = GameController.everyonesSpeed;
+					else if (activeVehicles [i].speed < 0)
+						activeVehicles [i].speed = 0;
+
+					GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+					temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+				}
+
+
+				break;
+			case (2):
+			case(3):
+				if (activeVehicles [i].currentLocation.y >40f)
+				{	
+					if (activeVehicles [i].inLine == 0 && activeVehicles [i].currentLocation.y <50f)
+					{
+						if (!GameController.changeLights)
+						{
+							if (!activeVehicles [i].stopping)
+							{
+								activeVehicles [i].stopping = true;
+								activeVehicles [i].accel = GameController.everyonesSpeed * GameController.everyonesSpeed
+									/ (2f * (42f - Math.Abs (activeVehicles [i].currentLocation.y)));
+								activeVehicles [i].accel *= GameController.DELTA;
+							} else
+							{
+								if (activeVehicles [i].speed > 0)
+									activeVehicles [i].speed += activeVehicles [i].accel;
+								else
+									activeVehicles [i].speed = 0;
+								GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							}
+						} else
+						{
+							if (lane == 2)
+							{
+								activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+								if (activeVehicles [i].speed > GameController.everyonesSpeed)
+									activeVehicles [i].speed = GameController.everyonesSpeed;
+								else if (activeVehicles [i].speed < 0)
+									activeVehicles [i].speed = 0;
+
+								GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							} else
+							{
+								if (GameController.doneTurning [6])
+								{
+									activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+									if (activeVehicles [i].speed > GameController.everyonesSpeed)
+										activeVehicles [i].speed = GameController.everyonesSpeed;
+									else if (activeVehicles [i].speed < 0)
+										activeVehicles [i].speed = 0;
+
+									GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								}
+							}
+						}
+
+					} else
+					{
+						if (i != 0)
+						{
+							float dist = Math.Abs (activeVehicles [i - 1].currentLocation.y - activeVehicles [i].currentLocation.y);
+							dist -= (activeVehicles [i - 1].halfLength + activeVehicles [i].halfLength);
+							float repulsion = (dist > 20f || activeVehicles [i - 1].currentLocation.x < -20f ? 0 : (float)Math.Pow (2, (20f - dist) / 5) - 1f);
+
+							activeVehicles [i].speed += activeVehicles [i].stdAccel * (2 - repulsion);
+							if (activeVehicles [i].speed > GameController.everyonesSpeed)
+								activeVehicles [i].speed = GameController.everyonesSpeed;
+							else if (activeVehicles [i].speed < 0)
+								activeVehicles [i].speed = 0;
+
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+
+						} else
+						{
+							if (activeVehicles [i].stopping)
+							{
+								if (lane == 3 && !GameController.doneTurning [6])
 									activeVehicles [i].speed = 0;
 								else
 								{
@@ -423,6 +589,115 @@ public class VehicleList : MonoBehaviour{
 				} else
 				{
 					AccelNormal (i);
+				}
+
+
+				break;
+			case (6):
+			case(7):
+				if (activeVehicles [i].currentLocation.y <-40f)
+				{	
+					if (activeVehicles [i].inLine == 0 && activeVehicles [i].currentLocation.y >-50f)
+					{
+						if (!GameController.changeLights)
+						{
+							if (!activeVehicles [i].stopping)
+							{
+								activeVehicles [i].stopping = true;
+								activeVehicles [i].accel = GameController.everyonesSpeed * GameController.everyonesSpeed
+									/ (2f * (42f - Math.Abs (activeVehicles [i].currentLocation.y)));
+								activeVehicles [i].accel *= GameController.DELTA;
+							} else
+							{
+								if (activeVehicles [i].speed > 0)
+									activeVehicles [i].speed += activeVehicles [i].accel;
+								else
+									activeVehicles [i].speed = 0;
+								GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							}
+						} else
+						{
+							if (lane == 6)
+							{
+								activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+								if (activeVehicles [i].speed > GameController.everyonesSpeed)
+									activeVehicles [i].speed = GameController.everyonesSpeed;
+								else if (activeVehicles [i].speed < 0)
+									activeVehicles [i].speed = 0;
+
+								GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							} else
+							{
+								if (GameController.doneTurning [2])
+								{
+									activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+									if (activeVehicles [i].speed > GameController.everyonesSpeed)
+										activeVehicles [i].speed = GameController.everyonesSpeed;
+									else if (activeVehicles [i].speed < 0)
+										activeVehicles [i].speed = 0;
+
+									GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								}
+							}
+						}
+
+					} else
+					{
+						if (i != 0)
+						{
+							float dist = Math.Abs (activeVehicles [i - 1].currentLocation.y - activeVehicles [i].currentLocation.y);
+							dist -= (activeVehicles [i - 1].halfLength + activeVehicles [i].halfLength);
+							float repulsion = (dist > 20f || activeVehicles [i - 1].currentLocation.x > 20f ? 0 : (float)Math.Pow (2, (20f - dist) / 5) - 1f);
+
+							activeVehicles [i].speed += activeVehicles [i].stdAccel * (2 - repulsion);
+							if (activeVehicles [i].speed > GameController.everyonesSpeed)
+								activeVehicles [i].speed = GameController.everyonesSpeed;
+							else if (activeVehicles [i].speed < 0)
+								activeVehicles [i].speed = 0;
+
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+
+						} else
+						{
+							if (activeVehicles [i].stopping)
+							{
+								if (lane == 7 && !GameController.doneTurning [2])
+									activeVehicles [i].speed = 0;
+								else
+								{
+									activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+									if (activeVehicles [i].speed > GameController.everyonesSpeed)
+										activeVehicles [i].speed = GameController.everyonesSpeed;
+									else if (activeVehicles [i].speed < 0)
+										activeVehicles [i].speed = 0;
+								}
+							} else
+							{
+								activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+								if (activeVehicles [i].speed > GameController.everyonesSpeed)
+									activeVehicles [i].speed = GameController.everyonesSpeed;
+								else if (activeVehicles [i].speed < 0)
+									activeVehicles [i].speed = 0;
+							}
+							GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+						}
+					}
+
+				} else
+				{
+					activeVehicles [i].speed += activeVehicles [i].stdAccel * 2;
+					if (activeVehicles [i].speed > GameController.everyonesSpeed)
+						activeVehicles [i].speed = GameController.everyonesSpeed;
+					else if (activeVehicles [i].speed < 0)
+						activeVehicles [i].speed = 0;
+
+					GameObject temp = GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
+					temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 				}
 
 

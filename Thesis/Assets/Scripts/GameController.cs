@@ -39,7 +39,7 @@ public class GameController : MonoBehaviour {
 	public static bool cameraAbove = false;
 
 	// for STOP LIGHTS
-	public static int TLSeconds = 10;
+	public static int TLSeconds = 20;
 	public static bool changeLights = false;
 	SerializedObject tagManager;
 	SerializedProperty tagsProp;
