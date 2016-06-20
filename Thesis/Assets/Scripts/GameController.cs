@@ -2,13 +2,14 @@
 using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
+
 
 
 
 
 public class GameController : MonoBehaviour {
 
+	public static List<GameObject> cars;
 	public static int currentMethod = 2;
 	public enum methods { v1, v2, TL};
 	private float waitTime;
@@ -41,8 +42,7 @@ public class GameController : MonoBehaviour {
 	// for STOP LIGHTS
 	public static int TLSeconds = 20;
 	public static bool changeLights = false;
-	SerializedObject tagManager;
-	SerializedProperty tagsProp;
+
 	public static bool[] doneTurning;
 
 	//-------------------- constants-----------------------------
@@ -106,7 +106,7 @@ public class GameController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-
+		cars = new List<GameObject>();
 		vehicleCounter = 0;
 
 		pause = false;
@@ -122,8 +122,7 @@ public class GameController : MonoBehaviour {
 		{
 			activeV = new VehicleList[8];
 			for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
-			tagManager = new SerializedObject (AssetDatabase.LoadAllAssetsAtPath ("ProjectSettings/TagManager.asset") [0]);
-			tagsProp = tagManager.FindProperty ("tags");
+
 
 			doneTurning = new bool[8];
 			for (int i = 0; i < 8; i++)
@@ -174,7 +173,7 @@ public class GameController : MonoBehaviour {
 				{
 					changeLights = !changeLights;
 
-					if (changeLights)
+					if (!changeLights)
 						for (int i = 0; i < 8; i += 4)
 						{
 							activeV [i].OrderQueue (i);
@@ -439,7 +438,7 @@ public class GameController : MonoBehaviour {
 						break;
 					}
 					GameObject vehicle = (GameObject)Instantiate (vehicles [vehicleIndex], spawnPosition, spawnRotation);
-
+					cars.Add (vehicle);
 					Vector3 center = new Vector3 (centersOfRot [lane].x, YCoor [vehicleIndex], centersOfRot [lane].y);
 					int type = (vehicleIndex > 4 ? 4 : vehicleIndex);
 					vehicle.GetComponent<Vehicle> ().SetType (type);
@@ -450,7 +449,7 @@ public class GameController : MonoBehaviour {
 					vehicle.GetComponent<Vehicle> ().SetSize (sizes [vehicleIndex]);
 					vehicle.tag = "Vehicle Checked";
 					vehicle.name = "" + ++vehicleCounter;
-
+					vehicle.GetComponent<Vehicle> ().SetName(vehicleCounter);
 					nameBeingChecked = vehicleCounter;
 
 					int assignedTurn = 0;
@@ -506,12 +505,7 @@ public class GameController : MonoBehaviour {
 							vehicleCounter, everyonesSpeed, sizes [vehicleIndex], widths [vehicleIndex], directionGiven, 
 							type, diagonals [vehicleIndex]); 
 						
-						string s = "V " + vehicleCounter;
-						tagsProp.InsertArrayElementAtIndex(9+ vehicleCounter);
-						SerializedProperty n = tagsProp.GetArrayElementAtIndex(9+ vehicleCounter);
-						n.stringValue = s;
-						tagManager.ApplyModifiedProperties();
-						vehicle.tag = s;
+
 					}
 
 					if (currentMethod == (int)methods.v2)

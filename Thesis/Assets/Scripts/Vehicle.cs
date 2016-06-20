@@ -6,7 +6,7 @@ public class Vehicle : MonoBehaviour {
 
 	public float speed;
 	private static float TWO_PI = 6.283185307f, HALF_PI = 1.570796326f, TO_DEG = 360f/TWO_PI;
-
+	public int name = -1;
 	//these are half the length and width of each vehicle
 	public float size, width;
 	public float theta = 0, extra; // theta is the roation angle for turning
@@ -481,6 +481,11 @@ public class Vehicle : MonoBehaviour {
 	public void CollisionHappened()
 	{
 		noCollision = false;
+	}
+
+	public void SetName(int i)
+	{
+		name = i;
 	}
 
 	private Vector2 RotateCCW (Vector2 vIn, float angle)
