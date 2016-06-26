@@ -10,13 +10,13 @@ using System.Collections.Generic;
 public class GameController : MonoBehaviour {
 
 	public static List<GameObject> cars;
-	public static int currentMethod = 2;
+	public static int currentMethod = 1;
 	public enum methods { v1, v2, TL};
 	private float waitTime;
 	public static VehicleList activeVList;
 	public static VehicleList[] activeV; //per lane
 	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
-	public static float everyonesSpeed = 40;
+	public static float everyonesSpeed = 100;
 	public int vehicleCounter;
 	public static int nameBeingChecked;
 	public static string timeText;
@@ -35,7 +35,7 @@ public class GameController : MonoBehaviour {
 	public static float[,] dataCenter, dataCenter2; //0= loc.x, 1= loc.y, 2= dir.x, 3= dir.y, 4= halflength, 5= halfwidth, 6= halfdiagonal
 	public static int nowFrame = 0; // the index of the current time frame
 	public static int[] lastIndexes, lastIndexes2;
-	public static int rowsInDataCenter = 1000;
+	public static int rowsInDataCenter = 1500;
 	public static bool inStepSim = true; //to toggle is simulation is of future or now
 	public static bool cameraAbove = false;
 
@@ -46,7 +46,7 @@ public class GameController : MonoBehaviour {
 	public static bool[] doneTurning;
 
 	//-------------------- constants-----------------------------
-	public const int ACTIVE_V_MAX = 200;
+	public const int ACTIVE_V_MAX = 400;
 
 	public const float DELTA = 0.0160000f, rR = 39f-18.3f, rL = 33f+6.5f; // for unity's delta time inaccuracies
 	private static float TWO_PI = 6.283185307f;
@@ -177,13 +177,14 @@ public class GameController : MonoBehaviour {
 						for (int i = 0; i < 8; i += 4)
 						{
 							activeV [i].OrderQueue (i);
-							activeV [i+1].OrderQueue (i+1);
+							activeV [i + 1].OrderQueue (i + 1);
 						}
-					else for (int i = 2; i < 8; i += 4)
-					{
-						activeV [i].OrderQueue (i);
-						activeV [i+1].OrderQueue (i+1);
-					}
+					else
+						for (int i = 2; i < 8; i += 4)
+						{
+							activeV [i].OrderQueue (i);
+							activeV [i + 1].OrderQueue (i + 1);
+						}
 					
 
 
@@ -205,8 +206,7 @@ public class GameController : MonoBehaviour {
 						temp.transform.position = new Vector3 (23.5f, 0.2f, 12f);
 						temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
 
-					} 
-					else
+					} else
 					{
 						GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
 						temp.transform.position = new Vector3 (-23.5f, 0.2f, -12f);
@@ -228,6 +228,20 @@ public class GameController : MonoBehaviour {
 				}
 
 			}
+		} else
+		{
+			GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
+			Destroy (temp);
+
+			temp = GameObject.FindGameObjectWithTag ("Red Light");
+			Destroy (temp);
+
+			temp = GameObject.FindGameObjectWithTag ("Green Light 2");
+			Destroy (temp);
+
+			temp = GameObject.FindGameObjectWithTag ("Red Light 2");
+			Destroy (temp);
+
 		}
 
 		if (currentMethod == (int)methods.v2)
@@ -343,7 +357,7 @@ public class GameController : MonoBehaviour {
 
 	IEnumerator algorithmV1()
 	{
-		while (Mathf.Abs(suggestedSpeed) < 70f)
+		while (Mathf.Abs(suggestedSpeed) < 1.75*everyonesSpeed)
 		{
 			// there is a bug here, that if this does not find a solution, it never unpauses. maybe a good thing. 
 
@@ -384,7 +398,7 @@ public class GameController : MonoBehaviour {
 			}
 
 		}
-		if (Mathf.Abs (suggestedSpeed) >= 70f)
+		if (Mathf.Abs (suggestedSpeed) >= 1.75*everyonesSpeed)
 			Debug.Log ("No solution found.");
 		yield return new WaitForSeconds (0);
 	}
@@ -843,8 +857,8 @@ public class GameController : MonoBehaviour {
 		int deltaFrame, startFrame;
 		Vector2 newLoc;
 		float beginningSpeed = suggestedSpeed-1;
-
-		while (suggestedSpeed < 70f && suggestedSpeed > 10f)
+		float increment = everyonesSpeed / 40f;
+		while (suggestedSpeed < 1.75*everyonesSpeed && suggestedSpeed > 0.25*everyonesSpeed)
 		{
 			
 			futureCollisionDetected = false;
@@ -860,13 +874,13 @@ public class GameController : MonoBehaviour {
 			if (notExceedMax)
 			{
 				if (deltaSpeed >= 0)
-					deltaSpeed += 1f;
+					deltaSpeed += increment;
 				suggestedSpeed = beginningSpeed + deltaSpeed;
 				deltaSpeed *= -1;
 			} else
 			{
 				suggestedSpeed = beginningSpeed + deltaSpeed;
-				deltaSpeed -= 1f;
+				deltaSpeed -= increment;
 			}
 
 
@@ -902,7 +916,7 @@ public class GameController : MonoBehaviour {
 
 			}
 		}
-		if (suggestedSpeed >= 70f || suggestedSpeed <= 10f)
+		if (suggestedSpeed >= 1.75* everyonesSpeed  || suggestedSpeed <= 0.25* everyonesSpeed)
 		{
 			noSolText.text = "No solution found.";
 			noSolShadow.text = "No solution found.";
@@ -974,7 +988,7 @@ public class GameController : MonoBehaviour {
 			else
 			{
 				float timeRemaining = distanceRemaining / lastVehicleSpeed [lane];
-				Debug.Log ("time remainin = " + timeRemaining);
+				//Debug.Log ("time remainin = " + timeRemaining);
 				rtn = (231f - myHalfLength) / timeRemaining;
 			}
 		}
@@ -987,14 +1001,14 @@ public class GameController : MonoBehaviour {
 		Vector2 currentLocation = newLoc, direction = dirIn, center = centersOfRot[laneIn];
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
-		int turnCounter = 0;
+		int turnCounter = 1;
 
 		for (int i=0;i<140 && !futureCollisionDetected ;i++)
 		{
 			startFrame++;
 			startFrame %= rowsInDataCenter;
-			// check collision ecery other frame
-			if (i%2==0) for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
+			// check collision every other frame
+			for (int j = 0; j < lastIndexes[startFrame] && !futureCollisionDetected; j++)
 			{
 
 				if (QuickCollisionDetection (currentLocation, new Vector2(dataCenter[startFrame,7*j],dataCenter[startFrame,7*j+1]),
@@ -1330,7 +1344,7 @@ public class GameController : MonoBehaviour {
 		Vector2 currentLocation = newLoc, direction = dirIn, center = centersOfRot[laneIn];
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
-		int turnCounter = 0;
+		int turnCounter = 1;
 
 		for (int i=0;i<140 ;i++)
 		{

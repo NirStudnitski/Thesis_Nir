@@ -27,7 +27,7 @@ public class Vehicle : MonoBehaviour {
 	void FixedUpdate () {
 
 		if (turnDone)
-			speed = 60f;
+			speed = 1.75f* GameController.everyonesSpeed;
 
 		if (initiate)
 		{

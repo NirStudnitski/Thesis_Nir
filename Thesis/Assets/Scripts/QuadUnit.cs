@@ -74,7 +74,7 @@ public class QuadUnit : MonoBehaviour {
 					float tempLength, tempWidth;
 					if (GameController.inStepSim)
 					{
-						int nextFrame = GameController.nowFrame + 1;
+						int nextFrame = GameController.nowFrame;
 						nextFrame %= GameController.rowsInDataCenter;
 						tempLength = GameController.dataCenter [nextFrame, index * 7 + 4];
 						tempWidth = GameController.dataCenter [nextFrame, index * 7 + 5];
