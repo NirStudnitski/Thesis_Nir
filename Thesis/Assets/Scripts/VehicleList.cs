@@ -205,8 +205,8 @@ public class VehicleList : MonoBehaviour{
 	public void UpdateSpeeds(int lane, int frame)
 	{	
 
-
-		if (frame % 30 == 0)
+		int period = (int) (1200f / GameController.everyonesSpeed);
+		if (frame % period == 0)
 		switch (lane)
 		{
 			case (0):

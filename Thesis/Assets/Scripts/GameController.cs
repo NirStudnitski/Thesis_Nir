@@ -10,13 +10,13 @@ using System.Collections.Generic;
 public class GameController : MonoBehaviour {
 
 	public static List<GameObject> cars;
-	public static int currentMethod = 1;
+	public static int currentMethod = 2;
 	public enum methods { v1, v2, TL};
 	private float waitTime;
 	public static VehicleList activeVList;
 	public static VehicleList[] activeV; //per lane
 	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
-	public static float everyonesSpeed = 100;
+	public static float everyonesSpeed = 200;
 	public int vehicleCounter;
 	public static int nameBeingChecked;
 	public static string timeText;
@@ -105,6 +105,10 @@ public class GameController : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+
+		// works great:
+		//string[] lines = { "First \t line", "Second \t line", "Third line" };
+		//System.IO.File.WriteAllLines("/Users/nirstudnitski/Desktop/WriteLines.txt", lines);
 
 		cars = new List<GameObject>();
 		vehicleCounter = 0;

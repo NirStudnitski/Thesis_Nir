@@ -8,7 +8,7 @@ public class VehicleStat  {
 	public bool turnInitiate = false, isQuad = false, turnDone = false, stopping = false;
 	public bool turnIn = false, turnD = false, stopped2 = false;
 	public int turnPlan, lane, name, index, turnCounter = 0, type, inLine = -255;
-	public float speed,  halfLength, halfWidth, halfDiag, extra, theta,  accel = 0, stdAccel = 0.3f;
+	public float speed,  halfLength, halfWidth, halfDiag, extra, theta,  accel = 0, stdAccel = 0.0001875f *GameController.everyonesSpeed * GameController.everyonesSpeed;
 
 
 
