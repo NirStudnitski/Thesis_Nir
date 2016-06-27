@@ -10,7 +10,7 @@ using System.Collections.Generic;
 public class GameController : MonoBehaviour {
 
 	public static List<GameObject> cars;
-	public static int currentMethod = 2;
+	public static int currentMethod = 1;
 	public enum methods { v1, v2, TL};
 	private float waitTime;
 	public static VehicleList activeVList;
@@ -1006,7 +1006,8 @@ public class GameController : MonoBehaviour {
 		bool turnInitiate = false, turnDone = false, futureCollisionDetected = false;
 		float extra=0, theta = 0f, HALF_PI = 1.5707963f;
 		int turnCounter = 1;
-
+		startFrame--;
+		startFrame %= rowsInDataCenter;
 		for (int i=0;i<140 && !futureCollisionDetected ;i++)
 		{
 			startFrame++;
