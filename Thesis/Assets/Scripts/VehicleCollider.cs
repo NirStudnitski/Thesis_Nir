@@ -21,6 +21,8 @@ public class VehicleCollider : MonoBehaviour {
 				{
 					this.GetComponent<Vehicle> ().SetSpeed (0); 
 					this.GetComponent<Vehicle> ().CollisionHappened ();
+					GameController.collisionHappened = true;
+					Destroy (other.gameObject);
 				}
 			}
 		}

@@ -45,6 +45,14 @@ public class GameController : MonoBehaviour {
 
 	public static bool[] doneTurning;
 
+
+
+	// for runs
+	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 600;
+	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false;
+
+
+
 	//-------------------- constants-----------------------------
 	public const int ACTIVE_V_MAX = 400;
 
@@ -160,6 +168,12 @@ public class GameController : MonoBehaviour {
 
 	void FixedUpdate () 
 	{
+
+		if (collisionHappened || noSolutionHappened)
+		{
+			globalPause = true;
+		}
+
 		elapsedTime += DELTA;
 		frameCounter++;
 		if (frameCounter % 10 == 0)
@@ -417,7 +431,7 @@ public class GameController : MonoBehaviour {
 		while (true)
 		{
 			spawn = false;
-			if (!pause) 
+			if (!pause && !globalPause) 
 			{
 				vehicleIndex = Random.Range (0, 13);
 				lane = Random.Range (0, 8);
@@ -924,6 +938,7 @@ public class GameController : MonoBehaviour {
 		{
 			noSolText.text = "No solution found.";
 			noSolShadow.text = "No solution found.";
+			noSolutionHappened = true;
 		}
 		
 		notExceedMax = true;
