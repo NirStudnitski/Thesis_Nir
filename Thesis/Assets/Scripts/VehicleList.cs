@@ -189,7 +189,7 @@ public class VehicleList : MonoBehaviour{
 			if (activeVehicles [i].inLine >= 0 && activeVehicles [i].inLine < 5)
 			{
 				GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);//GameObject.FindGameObjectWithTag ("V " + activeVehicles [i].name);
-				temp.GetComponent<Vehicle> ().SetTurnPlan(-1);
+				if (temp!=null) temp.GetComponent<Vehicle> ().SetTurnPlan(-1);
 				numTurning = activeVehicles [i].inLine;
 				indexer = i;
 			}
@@ -266,6 +266,8 @@ public class VehicleList : MonoBehaviour{
 
 		for (int i = 0; i <= lastIndex; i++)
 		{
+			GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
+
 			// conditionals for traffic control, if stopped, mark first five to turn left
 			switch (lane)
 			{
@@ -289,8 +291,7 @@ public class VehicleList : MonoBehaviour{
 									activeVehicles [i].speed += activeVehicles [i].accel;
 								else
 									activeVehicles [i].speed = 0;
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							}
 						} else
 						{
@@ -302,8 +303,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 						
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							} else
 							{
 								if (GameController.doneTurning [4])
@@ -314,8 +314,7 @@ public class VehicleList : MonoBehaviour{
 									else if (activeVehicles [i].speed < 0)
 										activeVehicles [i].speed = 0;
 
-									GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+									if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 								}
 							}
 						}
@@ -334,8 +333,7 @@ public class VehicleList : MonoBehaviour{
 							else if (activeVehicles [i].speed < 0)
 								activeVehicles [i].speed = 0;
 
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 									
 						} else
 						{
@@ -359,8 +357,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 							}
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 						}
 					}
 
@@ -372,8 +369,7 @@ public class VehicleList : MonoBehaviour{
 					else if (activeVehicles [i].speed < 0)
 						activeVehicles [i].speed = 0;
 
-					GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-					temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+					if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 				}
 
 
@@ -398,8 +394,7 @@ public class VehicleList : MonoBehaviour{
 									activeVehicles [i].speed += activeVehicles [i].accel;
 								else
 									activeVehicles [i].speed = 0;
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							}
 						} else
 						{
@@ -411,8 +406,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							} else
 							{
 								if (GameController.doneTurning [6])
@@ -423,8 +417,7 @@ public class VehicleList : MonoBehaviour{
 									else if (activeVehicles [i].speed < 0)
 										activeVehicles [i].speed = 0;
 
-									GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+									if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 								}
 							}
 						}
@@ -443,8 +436,7 @@ public class VehicleList : MonoBehaviour{
 							else if (activeVehicles [i].speed < 0)
 								activeVehicles [i].speed = 0;
 
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 
 						} else
 						{
@@ -468,8 +460,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 							}
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 						}
 					}
 
@@ -481,8 +472,7 @@ public class VehicleList : MonoBehaviour{
 					else if (activeVehicles [i].speed < 0)
 						activeVehicles [i].speed = 0;
 
-					GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-					temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+					if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 				}
 
 
@@ -508,8 +498,7 @@ public class VehicleList : MonoBehaviour{
 									activeVehicles [i].speed += activeVehicles [i].accel;
 								else
 									activeVehicles [i].speed = 0;
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							}
 						}else
 						{
@@ -521,8 +510,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							} else
 							{
 								if (GameController.doneTurning [0])
@@ -533,8 +521,7 @@ public class VehicleList : MonoBehaviour{
 									else if (activeVehicles [i].speed < 0)
 										activeVehicles [i].speed = 0;
 
-									GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+									if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 								}
 							}
 						}
@@ -553,8 +540,7 @@ public class VehicleList : MonoBehaviour{
 							else if (activeVehicles [i].speed < 0)
 								activeVehicles [i].speed = 0;
 
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 
 						} else
 						{
@@ -578,8 +564,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 							}
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 						}
 					}
 
@@ -610,8 +595,7 @@ public class VehicleList : MonoBehaviour{
 									activeVehicles [i].speed += activeVehicles [i].accel;
 								else
 									activeVehicles [i].speed = 0;
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							}
 						} else
 						{
@@ -623,8 +607,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 
-								GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-								temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+								if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 							} else
 							{
 								if (GameController.doneTurning [2])
@@ -635,8 +618,7 @@ public class VehicleList : MonoBehaviour{
 									else if (activeVehicles [i].speed < 0)
 										activeVehicles [i].speed = 0;
 
-									GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-									temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+									if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 								}
 							}
 						}
@@ -655,8 +637,7 @@ public class VehicleList : MonoBehaviour{
 							else if (activeVehicles [i].speed < 0)
 								activeVehicles [i].speed = 0;
 
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 
 						} else
 						{
@@ -680,8 +661,7 @@ public class VehicleList : MonoBehaviour{
 								else if (activeVehicles [i].speed < 0)
 									activeVehicles [i].speed = 0;
 							}
-							GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-							temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+							if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 						}
 					}
 
@@ -693,8 +673,7 @@ public class VehicleList : MonoBehaviour{
 					else if (activeVehicles [i].speed < 0)
 						activeVehicles [i].speed = 0;
 
-					GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-					temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+					if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 				}
 
 
@@ -714,7 +693,7 @@ public class VehicleList : MonoBehaviour{
 			activeVehicles [i].speed = 0;
 
 		GameObject temp = GameController.cars.Find(x => x.GetComponent<Vehicle> ().name == activeVehicles[i].name);
-		temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
+		if (temp!=null) temp.GetComponent<Vehicle> ().SetSpeed (activeVehicles [i].speed);
 	}
 
 	public float GetSpeed (int i)

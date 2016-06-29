@@ -48,12 +48,13 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 1, runCounter =0, frameToWaitFrom = 0, runLength = 20, testSpeed = 1, testFrequency=0, outRows;
+	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 120, testSpeed = 1, testFrequency=0, outRows;
 	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
-	float[] vFrequency = { 0.5f, 1f, 1.5f, 1.75f, 2f, 2.25f, 2.5f };
+	float[] vFrequency = { 1f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
 	string[] outputTemp;
+	string throughPut, endReason;
 
 
 	//-------------------- constants-----------------------------
@@ -128,10 +129,11 @@ public class GameController : MonoBehaviour {
 		{
 			outRows = (int)(200*vFrequency[testFrequency]);
 				output = new string[outRows, numOfRuns];
-			totalOutput =  new string[7];
+			totalOutput =  new string[vFrequency.Length];
 		}
 
-
+		throughPut = "";
+		endReason="";
 		pause = false;
 		collisionOn = true;
 		simulationOn = false;
@@ -150,7 +152,7 @@ public class GameController : MonoBehaviour {
 		if (currentMethod == (int)methods.TL)
 		{
 			activeV = new VehicleList[8];
-			for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
+			for (int i=0;i<vFrequency.Length;i++) activeV[i] = new VehicleList ();
 
 
 			doneTurning = new bool[8];
@@ -186,7 +188,7 @@ public class GameController : MonoBehaviour {
 	void FixedUpdate () 
 	{
 
-		if (testSpeed >0 && testFrequency < 7) if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
+		if (testSpeed >0 && testFrequency < vFrequency.Length) if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
 		{
 			globalPause = true;
 
@@ -206,12 +208,35 @@ public class GameController : MonoBehaviour {
 			{
 				frameToWaitFrom = 0;
 				elapsedTime = 0;
-				collisionHappened = false;
-				noSolutionHappened = false;
 				for (int i = 0; i < 8; i++)
 					laneAvailable [i] = true;
 				vehicleCounter = 0;
+				if (runCounter == 0)
+				{
+					throughPut += madeItThrough;
+					if (!collisionHappened)
+					{
+						if (!noSolutionHappened)
+							endReason += "Timeout";
+						else
+							endReason += "No Solution";
+					} else
+						endReason += "Collision";
+				} else
+				{
+					throughPut += "\t"+madeItThrough;
+					if (!collisionHappened)
+					{
+						if (!noSolutionHappened)
+							endReason += "\tTimeout";
+						else
+							endReason += "\tNo Solution";
+					} else
+						endReason += "\tCollision";
+				}
 				madeItThrough = 0;
+				collisionHappened = false;
+				noSolutionHappened = false;
 
 				if (currentMethod == (int)methods.TL)
 				{
@@ -233,13 +258,19 @@ public class GameController : MonoBehaviour {
 				}
 
 
-				Debug.Log ("frequencty: " + testFrequency + ", run number: " + runCounter);
+				//Debug.Log ("frequencty: " + testFrequency + ", run number: " + runCounter);
 				noSolText.text = "";
 				noSolShadow.text = "";
 				if (++runCounter == numOfRuns)
 				{
 					outputTemp = new string[outRows];
-					totalOutput [testFrequency] = "\n\n\nnew test:\n";
+					totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
+					totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
+					totalOutput [testFrequency] += throughPut + "\n";
+					totalOutput [testFrequency] += endReason+"\n";
+					throughPut = "";
+					endReason="";
+
 					for (int i = 0; i < outRows; i++)
 						for (int j = 0; j < numOfRuns; j++)
 							outputTemp [i] += output [i, j];
@@ -248,7 +279,7 @@ public class GameController : MonoBehaviour {
 					
 					//Debug.Log(totalOutput[testFrequency]);
 					testFrequency++;
-					if (testFrequency < 7)
+					if (testFrequency < vFrequency.Length)
 					{
 						waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
 						outRows = (int)(200 * vFrequency [testFrequency]);
@@ -259,12 +290,13 @@ public class GameController : MonoBehaviour {
 
 				}
 
-				globalPause = (testFrequency == 7);
+				globalPause = (testFrequency == vFrequency.Length);
 			} 
 
-			if (testFrequency == 7 && !outputPrinted)
+			if (testFrequency == vFrequency.Length && !outputPrinted)
 			{
-				System.IO.File.WriteAllLines ("/Users/nirstudnitski/Desktop/WriteLines.txt", totalOutput);
+				string pathOut = "/Users/nirstudnitski/Desktop/thesis/output/v2speed" + (testSpeed * 40) + ".txt";
+				System.IO.File.WriteAllLines (pathOut, totalOutput);
 				outputPrinted = true;
 				Debug.Log ("print reached");
 				Application.Quit();
