@@ -48,8 +48,8 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 1, runCounter =0, frameToWaitFrom = 0, runLength = 120, testSpeed = 1, testFrequency=0, outRows;
-	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false;
+	int numOfRuns = 1, runCounter =0, frameToWaitFrom = 0, runLength = 20, testSpeed = 1, testFrequency=0, outRows;
+	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
 	float[] vFrequency = { 0.5f, 1f, 1.5f, 1.75f, 2f, 2.25f, 2.5f };
@@ -198,18 +198,40 @@ public class GameController : MonoBehaviour {
 					
 
 					Destroy (cw);
-					madeItThrough = 0;
+
 				}
-				cars = new List<GameObject>();
-			}
-			else if (frameCounter > frameToWaitFrom + 1200 && runCounter < numOfRuns)
+				cars = new List<GameObject> ();
+				//Debug.Log (madeItThrough);
+			} else if (frameCounter > frameToWaitFrom + 100 && runCounter < numOfRuns)
 			{
 				frameToWaitFrom = 0;
 				elapsedTime = 0;
 				collisionHappened = false;
 				noSolutionHappened = false;
-
+				for (int i = 0; i < 8; i++)
+					laneAvailable [i] = true;
 				vehicleCounter = 0;
+				madeItThrough = 0;
+
+				if (currentMethod == (int)methods.TL)
+				{
+					activeV = new VehicleList[8];
+					for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
+
+
+					doneTurning = new bool[8];
+					for (int i = 0; i < 8; i++)
+						doneTurning [i] = false;
+				}
+
+				if (currentMethod == (int)methods.v2)
+				{
+					dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX];
+					lastIndexes = new int[rowsInDataCenter];
+
+
+				}
+
 
 				Debug.Log ("frequencty: " + testFrequency + ", run number: " + runCounter);
 				noSolText.text = "";
@@ -217,13 +239,14 @@ public class GameController : MonoBehaviour {
 				if (++runCounter == numOfRuns)
 				{
 					outputTemp = new string[outRows];
-					totalOutput[testFrequency] = "\n\n\nnew test:\n";
-					for (int i=0;i< outRows;i++)
-						for (int j=0;j<numOfRuns;j++) outputTemp[i]+=output[i,j];
+					totalOutput [testFrequency] = "\n\n\nnew test:\n";
 					for (int i = 0; i < outRows; i++)
-						totalOutput[testFrequency] += outputTemp [i] + "\n";
+						for (int j = 0; j < numOfRuns; j++)
+							outputTemp [i] += output [i, j];
+					for (int i = 0; i < outRows; i++)
+						totalOutput [testFrequency] += outputTemp [i] + "\n";
 					
-					Debug.Log(totalOutput[testFrequency]);
+					//Debug.Log(totalOutput[testFrequency]);
 					testFrequency++;
 					if (testFrequency < 7)
 					{
@@ -237,8 +260,15 @@ public class GameController : MonoBehaviour {
 				}
 
 				globalPause = (testFrequency == 7);
+			} 
+
+			if (testFrequency == 7 && !outputPrinted)
+			{
+				System.IO.File.WriteAllLines ("/Users/nirstudnitski/Desktop/WriteLines.txt", totalOutput);
+				outputPrinted = true;
+				Debug.Log ("print reached");
+				Application.Quit();
 			}
-			else if (testFrequency == 7) System.IO.File.WriteAllLines ("/Users/nirstudnitski/Desktop/WriteLines.txt", totalOutput);
 
 		}
 
