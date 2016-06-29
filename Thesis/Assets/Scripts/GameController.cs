@@ -16,9 +16,9 @@ public class GameController : MonoBehaviour {
 	public static VehicleList activeVList;
 	public static VehicleList[] activeV; //per lane
 	float suggestedSpeed, elapsedTime = 0, deltaSpeed=0;
-	public static float everyonesSpeed = 200;
+	public static float everyonesSpeed = 40;
 	public int vehicleCounter;
-	public static int nameBeingChecked;
+	public static int nameBeingChecked, madeItThrough =0;
 	public static string timeText;
 	public static int numCloseV=0, simulationSpeed = 5, frameCounter=0;
 	public Text rateText, rateShadow;
@@ -48,9 +48,12 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 600;
-	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false;
-
+	int numOfRuns = 1, runCounter =0, frameToWaitFrom = 0, runLength = 120, testSpeed = 1, testFrequency=0, outRows;
+	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false;
+	string[,] output;
+	static string[] totalOutput;
+	float[] vFrequency = { 0.5f, 1f, 1.5f, 1.75f, 2f, 2.25f, 2.5f };
+	string[] outputTemp;
 
 
 	//-------------------- constants-----------------------------
@@ -114,18 +117,32 @@ public class GameController : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		// works great:
-		//string[] lines = { "First \t line", "Second \t line", "Third line" };
-		//System.IO.File.WriteAllLines("/Users/nirstudnitski/Desktop/WriteLines.txt", lines);
+
+
+
 
 		cars = new List<GameObject>();
 		vehicleCounter = 0;
 
+		if (testSpeed > 0)
+		{
+			outRows = (int)(200*vFrequency[testFrequency]);
+				output = new string[outRows, numOfRuns];
+			totalOutput =  new string[7];
+		}
+
+
 		pause = false;
 		collisionOn = true;
-		simulationOn = true;
-		waitTime = 4f;
-		Slider (0.25f);
+		simulationOn = false;
+		if (testSpeed < 0)
+		{
+			waitTime = 4f;
+			Slider (0.25f);
+		} else
+		{
+			waitTime = 1f / (testSpeed * vFrequency[testFrequency]);
+		}
 		LeftTurningSlider (25f);
 		RightTurningSlider (25f);
 
@@ -169,9 +186,60 @@ public class GameController : MonoBehaviour {
 	void FixedUpdate () 
 	{
 
-		if (collisionHappened || noSolutionHappened)
+		if (testSpeed >0 && testFrequency < 7) if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
 		{
 			globalPause = true;
+
+			if (frameToWaitFrom == 0)
+			{
+				frameToWaitFrom = frameCounter;
+				foreach (GameObject cw in cars)
+				{
+					
+
+					Destroy (cw);
+					madeItThrough = 0;
+				}
+				cars = new List<GameObject>();
+			}
+			else if (frameCounter > frameToWaitFrom + 1200 && runCounter < numOfRuns)
+			{
+				frameToWaitFrom = 0;
+				elapsedTime = 0;
+				collisionHappened = false;
+				noSolutionHappened = false;
+
+				vehicleCounter = 0;
+
+				Debug.Log ("frequencty: " + testFrequency + ", run number: " + runCounter);
+				noSolText.text = "";
+				noSolShadow.text = "";
+				if (++runCounter == numOfRuns)
+				{
+					outputTemp = new string[outRows];
+					totalOutput[testFrequency] = "\n\n\nnew test:\n";
+					for (int i=0;i< outRows;i++)
+						for (int j=0;j<numOfRuns;j++) outputTemp[i]+=output[i,j];
+					for (int i = 0; i < outRows; i++)
+						totalOutput[testFrequency] += outputTemp [i] + "\n";
+					
+					Debug.Log(totalOutput[testFrequency]);
+					testFrequency++;
+					if (testFrequency < 7)
+					{
+						waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
+						outRows = (int)(200 * vFrequency [testFrequency]);
+						output = new string[outRows, numOfRuns];
+					}
+					runCounter = 0;
+
+
+				}
+
+				globalPause = (testFrequency == 7);
+			}
+			else if (testFrequency == 7) System.IO.File.WriteAllLines ("/Users/nirstudnitski/Desktop/WriteLines.txt", totalOutput);
+
 		}
 
 		elapsedTime += DELTA;
@@ -433,7 +501,7 @@ public class GameController : MonoBehaviour {
 			spawn = false;
 			if (!pause && !globalPause) 
 			{
-				vehicleIndex = Random.Range (0, 13);
+				vehicleIndex = oneTypeOfVehicle ? 12 : Random.Range (0, 13);
 				lane = Random.Range (0, 8);
 
 
@@ -929,6 +997,11 @@ public class GameController : MonoBehaviour {
 				frameAtInstantiation [laneNow] = frameCounter;
 				halfLengthAtInst [laneNow] = temp.GetComponent<Vehicle> ().GetSize ();
 				lastVehicleSpeed [laneNow] = suggestedSpeed;
+
+
+				if (runCounter==0) output [vehicleCounter, runCounter] = "" + suggestedSpeed;
+				else output [vehicleCounter, runCounter] = "\t" + suggestedSpeed;
+
 				//Debug.Log ("car number " + vehicleCounter + "final speed is " + suggestedSpeed);
 				break;
 
@@ -1041,7 +1114,7 @@ public class GameController : MonoBehaviour {
 						direction, new Vector2(dataCenter[startFrame,7*j+2],
 							dataCenter[startFrame,7*j+3])))
 					{
-						Debug.Log ("Collision");
+						//Debug.Log ("Collision");
 						futureCollisionDetected = true;
 					}
 

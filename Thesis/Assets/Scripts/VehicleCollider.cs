@@ -23,6 +23,8 @@ public class VehicleCollider : MonoBehaviour {
 					this.GetComponent<Vehicle> ().CollisionHappened ();
 					GameController.collisionHappened = true;
 					Destroy (other.gameObject);
+					GameController.cars.Remove (other.gameObject);
+					Debug.Log ("an actual collision happened");
 				}
 			}
 		}
