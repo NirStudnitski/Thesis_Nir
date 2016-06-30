@@ -48,13 +48,15 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 120, testSpeed = 1, testFrequency=0, outRows;
+	int numOfRuns = 2, runCounter =0, frameToWaitFrom = 0, runLength = 60, testSpeed = 5, testFrequency=0, outRows;
 	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
-	float[] vFrequency = { 1f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
+	float[] vFrequency = { 1f, 1.25, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
 	string[] outputTemp;
 	string throughPut, endReason;
+
+	bool runAnalysis = true;
 
 
 	//-------------------- constants-----------------------------
@@ -120,7 +122,9 @@ public class GameController : MonoBehaviour {
 
 
 
-
+		if (runAnalysis)
+			everyonesSpeed = testSpeed * 40f;
+		else testSpeed = -1;
 
 		cars = new List<GameObject>();
 		vehicleCounter = 0;
@@ -188,121 +192,256 @@ public class GameController : MonoBehaviour {
 	void FixedUpdate () 
 	{
 
-		if (testSpeed >0 && testFrequency < vFrequency.Length) if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
+		if (currentMethod == (int)methods.v2 && runAnalysis)
 		{
-			globalPause = true;
-
-			if (frameToWaitFrom == 0)
+			if (testSpeed > 0 && testFrequency < vFrequency.Length)
+			if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
 			{
-				frameToWaitFrom = frameCounter;
-				foreach (GameObject cw in cars)
+				globalPause = true;
+
+				if (frameToWaitFrom == 0)
 				{
+					frameToWaitFrom = frameCounter;
+					foreach (GameObject cw in cars)
+					{
 					
 
-					Destroy (cw);
+						Destroy (cw);
 
-				}
-				cars = new List<GameObject> ();
-				//Debug.Log (madeItThrough);
-			} else if (frameCounter > frameToWaitFrom + 100 && runCounter < numOfRuns)
-			{
-				frameToWaitFrom = 0;
-				elapsedTime = 0;
-				for (int i = 0; i < 8; i++)
-					laneAvailable [i] = true;
-				vehicleCounter = 0;
-				if (runCounter == 0)
+					}
+					cars = new List<GameObject> ();
+					//Debug.Log (madeItThrough);
+				} else if (frameCounter > frameToWaitFrom + 100 && runCounter < numOfRuns)
 				{
-					throughPut += madeItThrough;
-					if (!collisionHappened)
+					frameToWaitFrom = 0;
+					elapsedTime = 0;
+					for (int i = 0; i < 8; i++)
+						laneAvailable [i] = true;
+					vehicleCounter = 0;
+					if (runCounter == 0)
 					{
-						if (!noSolutionHappened)
-							endReason += "Timeout";
-						else
-							endReason += "No Solution";
+						throughPut += madeItThrough;
+						if (!collisionHappened)
+						{
+							if (!noSolutionHappened)
+								endReason += "Timeout";
+							else
+								endReason += "No Solution";
+						} else
+							endReason += "Collision";
 					} else
-						endReason += "Collision";
-				} else
-				{
-					throughPut += "\t"+madeItThrough;
-					if (!collisionHappened)
 					{
-						if (!noSolutionHappened)
-							endReason += "\tTimeout";
-						else
-							endReason += "\tNo Solution";
-					} else
-						endReason += "\tCollision";
-				}
-				madeItThrough = 0;
-				collisionHappened = false;
-				noSolutionHappened = false;
+						throughPut += "\t" + madeItThrough;
+						if (!collisionHappened)
+						{
+							if (!noSolutionHappened)
+								endReason += "\tTimeout";
+							else
+								endReason += "\tNo Solution";
+						} else
+							endReason += "\tCollision";
+					}
+					madeItThrough = 0;
+					collisionHappened = false;
+					noSolutionHappened = false;
+					dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX];
+					lastIndexes = new int[rowsInDataCenter];
 
-				if (currentMethod == (int)methods.TL)
+					Debug.Log ("V2: frequencty: " + testFrequency + ", run number: " + runCounter);
+					noSolText.text = "";
+					noSolShadow.text = "";
+					if (++runCounter == numOfRuns)
+					{
+						outputTemp = new string[outRows];
+						totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
+						totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
+						totalOutput [testFrequency] += throughPut + "\n";
+						totalOutput [testFrequency] += endReason + "\n";
+						throughPut = "";
+						endReason = "";
+
+						for (int i = 0; i < outRows; i++)
+							for (int j = 0; j < numOfRuns; j++)
+								outputTemp [i] += output [i, j];
+						for (int i = 0; i < outRows; i++)
+							totalOutput [testFrequency] += outputTemp [i] + "\n";
+					
+						//Debug.Log(totalOutput[testFrequency]);
+						testFrequency++;
+						if (testFrequency < vFrequency.Length)
+						{
+							waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
+							outRows = (int)(200 * vFrequency [testFrequency]);
+							output = new string[outRows, numOfRuns];
+						}
+						runCounter = 0;
+
+
+					}
+
+					globalPause = (testFrequency == vFrequency.Length);
+				} 
+
+				if (testFrequency == vFrequency.Length )
 				{
+					string pathOut = "/Users/nirstudnitski/Desktop/thesis/output/v2speed" + (testSpeed * 40) + ".txt";
+					System.IO.File.WriteAllLines (pathOut, totalOutput);
+					Debug.Log ("print reached");
+
+					// now set up for TL test
+					runCounter = 0;
+					numOfRuns = 5;
+					testFrequency = 0;
+					frameToWaitFrom = 0;
+					elapsedTime = 0;
+					for (int i = 0; i < 8; i++)
+						laneAvailable [i] = true;
+					vehicleCounter = 0;
+					currentMethod = (int)methods.TL;
 					activeV = new VehicleList[8];
-					for (int i=0;i<8;i++) activeV[i] = new VehicleList ();
+					for (int i = 0; i < 8; i++)
+						activeV [i] = new VehicleList ();
 
 
 					doneTurning = new bool[8];
 					for (int i = 0; i < 8; i++)
 						doneTurning [i] = false;
+					madeItThrough = 0;
+					collisionHappened = false;
+					noSolutionHappened = false;
+
+					GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
+					temp.transform.position = new Vector3 (-23.5f, 0.2f, -12f);
+					temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+					temp = GameObject.FindGameObjectWithTag ("Red Light");
+					temp.transform.position = new Vector3 (-12f, 0.2f, 23f);
+					temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+					temp = GameObject.FindGameObjectWithTag ("Green Light 2");
+					temp.transform.position = new Vector3 (23.5f, 0.2f, 12f);
+					temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 90f);
+
+					temp = GameObject.FindGameObjectWithTag ("Red Light 2");
+					temp.transform.position = new Vector3 (12f, 0.2f, -23f);
+					temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
+
+					waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
+					outRows = (int)(200 * vFrequency [testFrequency]);
+					output = new string[outRows, numOfRuns];
+					collisionOn = false;
+					globalPause = false;
 				}
 
-				if (currentMethod == (int)methods.v2)
-				{
-					dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX];
-					lastIndexes = new int[rowsInDataCenter];
-
-
-				}
-
-
-				//Debug.Log ("frequencty: " + testFrequency + ", run number: " + runCounter);
-				noSolText.text = "";
-				noSolShadow.text = "";
-				if (++runCounter == numOfRuns)
-				{
-					outputTemp = new string[outRows];
-					totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
-					totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
-					totalOutput [testFrequency] += throughPut + "\n";
-					totalOutput [testFrequency] += endReason+"\n";
-					throughPut = "";
-					endReason="";
-
-					for (int i = 0; i < outRows; i++)
-						for (int j = 0; j < numOfRuns; j++)
-							outputTemp [i] += output [i, j];
-					for (int i = 0; i < outRows; i++)
-						totalOutput [testFrequency] += outputTemp [i] + "\n";
-					
-					//Debug.Log(totalOutput[testFrequency]);
-					testFrequency++;
-					if (testFrequency < vFrequency.Length)
-					{
-						waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
-						outRows = (int)(200 * vFrequency [testFrequency]);
-						output = new string[outRows, numOfRuns];
-					}
-					runCounter = 0;
-
-
-				}
-
-				globalPause = (testFrequency == vFrequency.Length);
-			} 
-
-			if (testFrequency == vFrequency.Length && !outputPrinted)
-			{
-				string pathOut = "/Users/nirstudnitski/Desktop/thesis/output/v2speed" + (testSpeed * 40) + ".txt";
-				System.IO.File.WriteAllLines (pathOut, totalOutput);
-				outputPrinted = true;
-				Debug.Log ("print reached");
-				Application.Quit();
 			}
-
 		}
+		else if (currentMethod == (int)methods.TL && runAnalysis)
+			{
+				if (testSpeed > 0 && testFrequency < vFrequency.Length)
+				if (collisionHappened || noSolutionHappened || elapsedTime > runLength)
+				{
+					globalPause = true;
+
+					if (frameToWaitFrom == 0)
+					{
+						frameToWaitFrom = frameCounter;
+						foreach (GameObject cw in cars)
+						{
+
+
+							Destroy (cw);
+
+						}
+						cars = new List<GameObject> ();
+						//Debug.Log (madeItThrough);
+					} else if (frameCounter > frameToWaitFrom + 100 && runCounter < numOfRuns)
+					{
+						frameToWaitFrom = 0;
+						elapsedTime = 0;
+						for (int i = 0; i < 8; i++)
+							laneAvailable [i] = true;
+						vehicleCounter = 0;
+						if (runCounter == 0)
+						{
+							throughPut += madeItThrough;
+							if (!collisionHappened)
+							{
+								if (!noSolutionHappened)
+									endReason += "Timeout";
+								else
+									endReason += "No Solution";
+							} else
+								endReason += "Collision";
+						} else
+						{
+							throughPut += "\t" + madeItThrough;
+							if (!collisionHappened)
+							{
+								if (!noSolutionHappened)
+									endReason += "\tTimeout";
+								else
+									endReason += "\tNo Solution";
+							} else
+								endReason += "\tCollision";
+						}
+						madeItThrough = 0;
+						collisionHappened = false;
+						noSolutionHappened = false;
+
+						
+							activeV = new VehicleList[8];
+							for (int i = 0; i < 8; i++)
+								activeV [i] = new VehicleList ();
+					
+							doneTurning = new bool[8];
+							for (int i = 0; i < 8; i++)
+								doneTurning [i] = false;
+						Debug.Log ("TL: frequencty: " + testFrequency + ", run number: " + runCounter);
+						noSolText.text = "";
+						noSolShadow.text = "";
+						if (++runCounter == numOfRuns)
+						{
+							outputTemp = new string[outRows];
+							totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
+							totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
+							totalOutput [testFrequency] += throughPut + "\n";
+							totalOutput [testFrequency] += endReason + "\n";
+							throughPut = "";
+							endReason = "";
+
+							for (int i = 0; i < outRows; i++)
+								for (int j = 0; j < numOfRuns; j++)
+									outputTemp [i] += output [i, j];
+							for (int i = 0; i < outRows; i++)
+								totalOutput [testFrequency] += outputTemp [i] + "\n";
+
+							//Debug.Log(totalOutput[testFrequency]);
+							testFrequency++;
+							if (testFrequency < vFrequency.Length)
+							{
+								waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
+								outRows = (int)(200 * vFrequency [testFrequency]);
+								output = new string[outRows, numOfRuns];
+							}
+							runCounter = 0;
+
+
+						}
+
+						globalPause = (testFrequency == vFrequency.Length);
+					} 
+
+					if (testFrequency == vFrequency.Length && !outputPrinted)
+					{
+						string pathOut = "/Users/nirstudnitski/Desktop/thesis/output/TLspeed" + (testSpeed * 40) + ".txt";
+						System.IO.File.WriteAllLines (pathOut, totalOutput);
+						outputPrinted = true;
+						Debug.Log ("print reached");
+						Application.Quit ();
+					}
+
+				}
+			}
 
 		elapsedTime += DELTA;
 		frameCounter++;
@@ -379,16 +518,20 @@ public class GameController : MonoBehaviour {
 		} else
 		{
 			GameObject temp = GameObject.FindGameObjectWithTag ("Green Light");
-			Destroy (temp);
+			temp.transform.position = new Vector3 (10000f, 0.2f, -12f);
+
 
 			temp = GameObject.FindGameObjectWithTag ("Red Light");
-			Destroy (temp);
+			temp.transform.position = new Vector3 (10000f, 0.2f, 23f);
+
 
 			temp = GameObject.FindGameObjectWithTag ("Green Light 2");
-			Destroy (temp);
+			temp.transform.position = new Vector3 (10000f, 0.2f, 12f);
+
 
 			temp = GameObject.FindGameObjectWithTag ("Red Light 2");
-			Destroy (temp);
+			temp.transform.position = new Vector3 (10000f, 0.2f, -23f);
+
 
 		}
 
