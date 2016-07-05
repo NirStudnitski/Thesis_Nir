@@ -40,7 +40,7 @@ public class GameController : MonoBehaviour {
 	public static bool cameraAbove = false;
 
 	// for STOP LIGHTS
-	public static int TLSeconds = 20;
+	public static int TLSeconds = 15;
 	public static bool changeLights = false;
 
 	public static bool[] doneTurning;
@@ -48,11 +48,11 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 2, runCounter =0, frameToWaitFrom = 0, runLength = 60, testSpeed = 5, testFrequency=0, outRows;
+	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 60, testSpeed = 1, testFrequency=0, outRows;
 	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
-	float[] vFrequency = { 1f, 1.25, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
+	float[] vFrequency = { 0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
 	string[] outputTemp;
 	string throughPut, endReason;
 
