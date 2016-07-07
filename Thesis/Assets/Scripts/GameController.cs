@@ -30,6 +30,8 @@ public class GameController : MonoBehaviour {
 	private float leftTurningPercent, rightTurningPercent;
 	public Button collisionButton, simulationButton;
 	static public bool collisionOn, simulationOn, pause, futureCollisionDetected = false, doneWithCheck = false;
+	static public int sumOfFrames =0;
+
 
 	//for V2
 	public static float[,] dataCenter, dataCenter2; //0= loc.x, 1= loc.y, 2= dir.x, 3= dir.y, 4= halflength, 5= halfwidth, 6= halfdiagonal
@@ -40,21 +42,22 @@ public class GameController : MonoBehaviour {
 	public static bool cameraAbove = false;
 
 	// for STOP LIGHTS
-	public static int TLSeconds = 15;
+	public static int TLSeconds = 20;
 	public static bool changeLights = false;
 
 	public static bool[] doneTurning;
+	public static Queue<int>[] waitingTimes;
 
 
 
 	// for runs
-	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 60, testSpeed = 1, testFrequency=0, outRows;
+	int numOfRuns = 2, runCounter =0, frameToWaitFrom = 0, runLength = 80, testSpeed = 3, testFrequency=0, outRows;
 	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
 	float[] vFrequency = { 0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 2.25f, 2.5f, 2.75f, 3f };
 	string[] outputTemp;
-	string throughPut, endReason;
+	string throughPut, endReason, averageWaiting;
 
 	bool runAnalysis = true;
 
@@ -96,6 +99,8 @@ public class GameController : MonoBehaviour {
 		new Vector2 (rL,  0), new Vector2 (-rR,0)
 	};
 
+	private int[,] laneChooser = { { 0, 1, 4, 5 }, { 2, 3, 6, 7 } };
+
 
 
 	static public bool[] laneAvailable = { true, true, true, true, true, true, true, true };
@@ -125,19 +130,22 @@ public class GameController : MonoBehaviour {
 		if (runAnalysis)
 			everyonesSpeed = testSpeed * 40f;
 		else testSpeed = -1;
+		waitingTimes = new Queue<int>[8];
+		for (int i=0;i<8;i++) waitingTimes[i] = new Queue<int>();
 
 		cars = new List<GameObject>();
 		vehicleCounter = 0;
 
 		if (testSpeed > 0)
 		{
-			outRows = (int)(200*vFrequency[testFrequency]);
+			outRows = (int)(200*vFrequency[testFrequency]*testSpeed);
 				output = new string[outRows, numOfRuns];
 			totalOutput =  new string[vFrequency.Length];
 		}
 
 		throughPut = "";
 		endReason="";
+		averageWaiting = "";
 		pause = false;
 		collisionOn = true;
 		simulationOn = false;
@@ -216,7 +224,11 @@ public class GameController : MonoBehaviour {
 					frameToWaitFrom = 0;
 					elapsedTime = 0;
 					for (int i = 0; i < 8; i++)
+					{
 						laneAvailable [i] = true;
+						waitingTimes [i].Clear ();
+					}
+					
 					vehicleCounter = 0;
 					if (runCounter == 0)
 					{
@@ -241,24 +253,31 @@ public class GameController : MonoBehaviour {
 						} else
 							endReason += "\tCollision";
 					}
+					float averageTime = ((float)sumOfFrames * DELTA) / ((float)madeItThrough);
+					if (runCounter == 0) averageWaiting += averageTime;
+					else averageWaiting += "\t" + averageTime;
 					madeItThrough = 0;
+					sumOfFrames = 0;
 					collisionHappened = false;
 					noSolutionHappened = false;
 					dataCenter = new float[rowsInDataCenter, ACTIVE_V_MAX];
 					lastIndexes = new int[rowsInDataCenter];
 
-					Debug.Log ("V2: frequencty: " + testFrequency + ", run number: " + runCounter);
+				//	Debug.Log ("V2: frequencty: " + testFrequency + ", run number: " + runCounter + ", av: "+averageTime);
 					noSolText.text = "";
 					noSolShadow.text = "";
 					if (++runCounter == numOfRuns)
 					{
 						outputTemp = new string[outRows];
 						totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
-						totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
+						totalOutput [testFrequency] += "Speed: \t" + (testSpeed * 40) + "\nFrequency: \t" 
+							+ (vFrequency [testFrequency] * testSpeed) +"\n";
 						totalOutput [testFrequency] += throughPut + "\n";
 						totalOutput [testFrequency] += endReason + "\n";
+						totalOutput [testFrequency] += averageWaiting + "\n";
 						throughPut = "";
 						endReason = "";
+						averageWaiting = "";
 
 						for (int i = 0; i < outRows; i++)
 							for (int j = 0; j < numOfRuns; j++)
@@ -271,7 +290,7 @@ public class GameController : MonoBehaviour {
 						if (testFrequency < vFrequency.Length)
 						{
 							waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
-							outRows = (int)(200 * vFrequency [testFrequency]);
+							outRows = (int)(200 * vFrequency [testFrequency]*testSpeed);
 							output = new string[outRows, numOfRuns];
 						}
 						runCounter = 0;
@@ -295,7 +314,10 @@ public class GameController : MonoBehaviour {
 					frameToWaitFrom = 0;
 					elapsedTime = 0;
 					for (int i = 0; i < 8; i++)
+					{
 						laneAvailable [i] = true;
+						waitingTimes [i].Clear ();
+					}
 					vehicleCounter = 0;
 					currentMethod = (int)methods.TL;
 					activeV = new VehicleList[8];
@@ -307,6 +329,7 @@ public class GameController : MonoBehaviour {
 					for (int i = 0; i < 8; i++)
 						doneTurning [i] = false;
 					madeItThrough = 0;
+					sumOfFrames = 0;
 					collisionHappened = false;
 					noSolutionHappened = false;
 
@@ -327,7 +350,7 @@ public class GameController : MonoBehaviour {
 					temp.transform.rotation = Quaternion.identity * Quaternion.Euler (90f, 90f, 0f);
 
 					waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
-					outRows = (int)(200 * vFrequency [testFrequency]);
+					outRows = (int)(200 * vFrequency [testFrequency]*testSpeed);
 					output = new string[outRows, numOfRuns];
 					collisionOn = false;
 					globalPause = false;
@@ -359,7 +382,10 @@ public class GameController : MonoBehaviour {
 						frameToWaitFrom = 0;
 						elapsedTime = 0;
 						for (int i = 0; i < 8; i++)
+						{
 							laneAvailable [i] = true;
+							waitingTimes [i].Clear ();
+						}
 						vehicleCounter = 0;
 						if (runCounter == 0)
 						{
@@ -384,7 +410,11 @@ public class GameController : MonoBehaviour {
 							} else
 								endReason += "\tCollision";
 						}
+						float averageTime = ((float)sumOfFrames * DELTA) / ((float)madeItThrough);
+						if (runCounter == 0) averageWaiting += averageTime;
+						else averageWaiting += "\t" + averageTime;
 						madeItThrough = 0;
+						sumOfFrames = 0;
 						collisionHappened = false;
 						noSolutionHappened = false;
 
@@ -396,18 +426,21 @@ public class GameController : MonoBehaviour {
 							doneTurning = new bool[8];
 							for (int i = 0; i < 8; i++)
 								doneTurning [i] = false;
-						Debug.Log ("TL: frequencty: " + testFrequency + ", run number: " + runCounter);
+						//Debug.Log ("TL: frequencty: " + testFrequency + ", run number: " + runCounter);
 						noSolText.text = "";
 						noSolShadow.text = "";
 						if (++runCounter == numOfRuns)
 						{
 							outputTemp = new string[outRows];
 							totalOutput [testFrequency] = "\n\n\nnew test:\n\n";
-							totalOutput [testFrequency] += "Speed: " + (testSpeed * 40) + "\nFrequency: " + (vFrequency [testFrequency] * testSpeed) + "\n";
+							totalOutput [testFrequency] += "Speed: \t" + (testSpeed * 40) + "\nFrequency: \t" 
+								+ (vFrequency [testFrequency] * testSpeed) +"\n";
 							totalOutput [testFrequency] += throughPut + "\n";
 							totalOutput [testFrequency] += endReason + "\n";
+							totalOutput [testFrequency] += averageWaiting + "\n";
 							throughPut = "";
 							endReason = "";
+							averageWaiting = "";
 
 							for (int i = 0; i < outRows; i++)
 								for (int j = 0; j < numOfRuns; j++)
@@ -420,7 +453,7 @@ public class GameController : MonoBehaviour {
 							if (testFrequency < vFrequency.Length)
 							{
 								waitTime = 1f / (testSpeed * vFrequency [testFrequency]);
-								outRows = (int)(200 * vFrequency [testFrequency]);
+								outRows = (int)(200 * vFrequency [testFrequency]*testSpeed);
 								output = new string[outRows, numOfRuns];
 							}
 							runCounter = 0;
@@ -707,22 +740,33 @@ public class GameController : MonoBehaviour {
 			if (!pause && !globalPause) 
 			{
 				vehicleIndex = oneTypeOfVehicle ? 12 : Random.Range (0, 13);
-				lane = Random.Range (0, 8);
+				int backForthDir = Random.Range (0, 2);
+				int innerLaneIndex = Random.Range (0, 4);
+				lane = laneChooser [backForthDir, innerLaneIndex];
 
 
-
-				for (int i = 0; i < 8; i++) {
+				// changed so that if a lane is not avilable, another lane will be searched only 
+				// from within the same back/forth direction, to eliminate false incoming rate for TL
+				for (int i = 0; i < 4; i++) {
 
 					if (!laneAvailable[lane]) {
-						lane++;
-						lane %= 8;
+						innerLaneIndex++;
+						innerLaneIndex %= 4;
+						lane = laneChooser [backForthDir, innerLaneIndex];
 					} else {
 						spawn = true;
 						break;
 					}
 				}
 
-				if (spawn) {
+				//if I couldn't spawn a car is waiting in traffic, log the time it began to wait and add it 
+				//when it finally spawns
+				if (!spawn)
+				{
+					if (currentMethod == (int)methods.TL)
+						waitingTimes[lane].Enqueue (frameCounter);
+				}
+				else {
 					Vector3 spawnPosition = new Vector3 (laneXZ [lane, 0], YCoor [vehicleIndex], laneXZ [lane, 1]);
 					Quaternion spawnRotation = Quaternion.identity * Quaternion.Euler (0f, (lane / 2) * 90f, 0f);
 

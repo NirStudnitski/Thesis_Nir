@@ -18,7 +18,7 @@ public class ExitBox : MonoBehaviour {
 
 		}
 		Destroy (other.gameObject);
-
+		GameController.sumOfFrames += other.GetComponent<Vehicle> ().framesAlive;
 		GameController.madeItThrough++;
 
 

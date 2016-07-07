@@ -17,15 +17,19 @@ public class Vehicle : MonoBehaviour {
 	private bool turnInitiate = false, noCollision = true, turnDone = false, initiate = true;
 	public int turnPlan; // 0 = keep going straight, 1 = turn right, -1 = turn left 
 	private float turnCounter = 1;
+	public int framesAlive =0;
 
 
 
 	void Start () {
+		
+		if (GameController.waitingTimes [lane].Count > 0)
+			framesAlive += GameController.frameCounter - GameController.waitingTimes [lane].Dequeue ();
 	}
 	
 
 	void FixedUpdate () {
-
+		framesAlive++;
 		if (turnDone)
 			speed = 1.75f* GameController.everyonesSpeed;
 
