@@ -51,7 +51,7 @@ public class GameController : MonoBehaviour {
 
 
 	// for runs
-	int numOfRuns = 2, runCounter =0, frameToWaitFrom = 0, runLength = 80, testSpeed = 3, testFrequency=0, outRows;
+	int numOfRuns = 20, runCounter =0, frameToWaitFrom = 0, runLength = 80, testSpeed = 1, testFrequency=0, outRows;
 	public static bool collisionHappened = false, noSolutionHappened = false, globalPause = false, oneTypeOfVehicle = false, outputPrinted = false;
 	string[,] output;
 	static string[] totalOutput;
@@ -253,7 +253,7 @@ public class GameController : MonoBehaviour {
 						} else
 							endReason += "\tCollision";
 					}
-					float averageTime = ((float)sumOfFrames * DELTA) / ((float)madeItThrough);
+					float averageTime = madeItThrough==0 ? 0 :((float)sumOfFrames * DELTA) / ((float)madeItThrough);
 					if (runCounter == 0) averageWaiting += averageTime;
 					else averageWaiting += "\t" + averageTime;
 					madeItThrough = 0;
@@ -410,7 +410,7 @@ public class GameController : MonoBehaviour {
 							} else
 								endReason += "\tCollision";
 						}
-						float averageTime = ((float)sumOfFrames * DELTA) / ((float)madeItThrough);
+						float averageTime = madeItThrough==0 ? 0 :((float)sumOfFrames * DELTA) / ((float)madeItThrough);
 						if (runCounter == 0) averageWaiting += averageTime;
 						else averageWaiting += "\t" + averageTime;
 						madeItThrough = 0;
